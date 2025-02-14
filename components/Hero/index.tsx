@@ -17,7 +17,7 @@ export function HeroSection() {
           <span className="hidden xl:inline">
             <br />
           </span>
-          <span className="text-violet-600">BetterFood</span>
+          <span className="text-red-600">BetterFood</span>
         </h1>
         <p className="text-muted-foreground mx-auto max-w-[700px] text-sm md:text-xl">
           Simplifique a gestão do seu restaurante com o BetterFood. Controle
@@ -28,7 +28,7 @@ export function HeroSection() {
         <Link href="/login">
           <Button
             size="lg"
-            className="gap-2 transition-all duration-300 hover:scale-105"
+            className="gap-2 bg-red-600 text-white transition-all duration-300 hover:scale-105 hover:bg-red-700"
           >
             Começar a criar <ArrowRight className="h-4 w-4" />
           </Button>
