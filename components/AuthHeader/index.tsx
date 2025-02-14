@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import { ThemeToggle } from '../Theme'
+import { NotificationsPopover } from '../Notifications'
+import { CartSheet } from '../Cart'
 
 export function AuthHeader() {
   return (
@@ -7,7 +9,9 @@ export function AuthHeader() {
       <div className="container mx-auto flex h-12 max-w-screen-2xl items-center justify-between scroll-smooth px-4">
         <Image src="/betterfood.png" alt="Logo" width={40} height={40} />
 
-        <div className="items-center space-x-2">
+        <div className="flex items-center gap-6">
+          <CartSheet />
+          <NotificationsPopover />
           <ThemeToggle />
         </div>
       </div>

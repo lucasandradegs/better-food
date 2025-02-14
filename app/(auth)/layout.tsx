@@ -4,9 +4,10 @@ import { Sidebar, SidebarBody, SidebarLink } from '@/components/SideBar'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, UserCog, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, UserCog, LogOut, ChartArea } from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
+import { Toaster } from '@/components/ui/toaster'
 
 export default function AuthLayout({
   children,
@@ -33,10 +34,10 @@ export default function AuthLayout({
       ),
     },
     {
-      label: 'Configurações',
-      href: '/configuracoes',
+      label: 'Dashboard',
+      href: '/dashboard',
       icon: (
-        <Settings className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
+        <ChartArea className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
     {
@@ -55,7 +56,7 @@ export default function AuthLayout({
     }
   }, [user, router, isLoading])
 
-  if (isLoading) {
+  if (!user) {
     return null
   }
 
@@ -91,6 +92,7 @@ export default function AuthLayout({
           <div className="flex flex-col gap-4 pt-20 md:pt-14">{children}</div>
         </main>
       </div>
+      <Toaster />
     </>
   )
 }
