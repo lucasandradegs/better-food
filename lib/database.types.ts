@@ -230,6 +230,23 @@ export interface Database {
     }
     Enums: {
       notification_status: 'read' | 'unread'
+      payment_status:
+        | 'pending'
+        | 'processing'
+        | 'approved'
+        | 'declined'
+        | 'refunded'
+        | 'cancelled'
+      order_status:
+        | 'pending'
+        | 'processing'
+        | 'paid'
+        | 'preparing'
+        | 'ready'
+        | 'delivering'
+        | 'delivered'
+        | 'cancelled'
+        | 'refunded'
     }
   }
 }

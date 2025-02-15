@@ -48,7 +48,7 @@ export default function Login() {
       </div>
       <div className="relative hidden h-screen w-full md:block">
         <Image
-          src="/loginPI2.png"
+          src="/LoginPI2.png"
           alt="Imagem"
           fill
           className="object-cover"

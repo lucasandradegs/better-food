@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { useToast } from '@/hooks/use-toast'
 
-interface CartItem {
+export interface CartItem {
   id: string
   name: string
   price: number
