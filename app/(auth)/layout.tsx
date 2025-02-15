@@ -8,6 +8,7 @@ import { LayoutDashboard, UserCog, LogOut, ChartArea } from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
 import { Toaster } from '@/components/ui/toaster'
+import { RoleGuard } from '@/components/RoleGuard'
 
 export default function AuthLayout({
   children,
@@ -34,19 +35,22 @@ export default function AuthLayout({
       ),
     },
     {
-      label: 'Dashboard',
-      href: '/dashboard',
-      icon: (
-        <ChartArea className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
-      ),
-    },
-    {
       label: 'Sair',
       href: '#',
       icon: (
         <LogOut className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
       onClick: signOut,
+    },
+  ]
+
+  const adminLinks = [
+    {
+      label: 'Dashboard',
+      href: '/dashboard',
+      icon: (
+        <ChartArea className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
     },
   ]
 
@@ -76,6 +80,11 @@ export default function AuthLayout({
                 {links.map((link, idx) => (
                   <SidebarLink key={idx} link={link} />
                 ))}
+                <RoleGuard allowedRoles={['admin']}>
+                  {adminLinks.map((link, idx) => (
+                    <SidebarLink key={`admin-${idx}`} link={link} />
+                  ))}
+                </RoleGuard>
               </div>
             </div>
           </SidebarBody>
