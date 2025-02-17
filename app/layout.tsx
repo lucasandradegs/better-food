@@ -36,6 +36,10 @@ export default function RootLayout({
             <CartProvider>{children}</CartProvider>
           </AuthProvider>
         </ForcedLightThemeProvider>
+        <script
+          src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"
+          async
+        />
       </body>
     </html>
   )

@@ -28,8 +28,8 @@ import { useToast } from '@/hooks/use-toast'
 import Image from 'next/image'
 import { CreditCard, QrCode } from 'lucide-react'
 
-const formSchema = z
-  .object({
+const formSchema = z.discriminatedUnion('paymentMethod', [
+  z.object({
     name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
     email: z.string().email('Email inválido'),
     taxId: z
@@ -48,25 +48,40 @@ const formSchema = z
         .max(9, 'Número deve ter entre 8 e 9 dígitos')
         .regex(/^\d+$/, 'Número deve conter apenas números'),
     }),
-    paymentMethod: z.enum(['pix', 'credit_card']),
-    card: z
-      .object({
-        number: z.string().regex(/^\d{16}$/, 'Número do cartão inválido'),
-        exp_month: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Mês inválido'),
-        exp_year: z.string().regex(/^\d{4}$/, 'Ano inválido'),
-        security_code: z.string().regex(/^\d{3}$/, 'CVV inválido'),
-        holder: z.object({
-          name: z.string().min(3, 'Nome do titular inválido'),
-        }),
-      })
-      .optional(),
-  })
-  .refine((data) => {
-    if (data.paymentMethod === 'credit_card') {
-      return !!data.card
-    }
-    return true
-  }, 'Dados do cartão são obrigatórios')
+    paymentMethod: z.literal('pix'),
+    card: z.undefined(),
+  }),
+  z.object({
+    name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+    email: z.string().email('Email inválido'),
+    taxId: z
+      .string()
+      .min(11, 'CPF deve ter 11 dígitos')
+      .max(11, 'CPF deve ter 11 dígitos')
+      .regex(/^\d+$/, 'CPF deve conter apenas números'),
+    phone: z.object({
+      area: z
+        .string()
+        .length(2, 'DDD deve ter 2 dígitos')
+        .regex(/^\d+$/, 'DDD deve conter apenas números'),
+      number: z
+        .string()
+        .min(8, 'Número deve ter entre 8 e 9 dígitos')
+        .max(9, 'Número deve ter entre 8 e 9 dígitos')
+        .regex(/^\d+$/, 'Número deve conter apenas números'),
+    }),
+    paymentMethod: z.literal('credit_card'),
+    card: z.object({
+      number: z.string().regex(/^\d{16}$/, 'Número do cartão inválido'),
+      exp_month: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Mês inválido'),
+      exp_year: z.string().regex(/^\d{4}$/, 'Ano inválido'),
+      security_code: z.string().regex(/^\d{3}$/, 'CVV inválido'),
+      holder: z.object({
+        name: z.string().min(3, 'Nome do titular inválido'),
+      }),
+    }),
+  }),
+])
 
 type FormData = z.infer<typeof formSchema>
 
@@ -100,7 +115,6 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
         number: '',
       },
       paymentMethod: 'pix',
-      card: undefined,
     },
   })
 
@@ -115,7 +129,6 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
           number: '',
         },
         paymentMethod: 'pix',
-        card: undefined,
       })
       setSelectedPaymentMethod('pix')
       setPixCode(null)
@@ -127,8 +140,6 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
 
   const handlePaymentMethodChange = (method: 'pix' | 'credit_card') => {
     setSelectedPaymentMethod(method)
-    form.setValue('paymentMethod', method, { shouldValidate: true })
-    form.clearErrors()
 
     // Limpa os estados do PIX quando trocar de método
     setPixCode(null)
@@ -136,7 +147,25 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
     setOrderId(null)
 
     if (method === 'pix') {
-      form.setValue('card', undefined, { shouldValidate: true })
+      form.reset({
+        ...form.getValues(),
+        paymentMethod: 'pix',
+        card: undefined,
+      })
+    } else {
+      form.reset({
+        ...form.getValues(),
+        paymentMethod: 'credit_card',
+        card: {
+          number: '',
+          exp_month: '',
+          exp_year: '',
+          security_code: '',
+          holder: {
+            name: '',
+          },
+        },
+      })
     }
   }
 
@@ -148,10 +177,12 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
     setTimeout(() => {
       onClose()
       setPaymentSuccess(false)
-    }, 3000)
+    }, 10000)
   }
 
   const onSubmit = async (data: FormData) => {
+    console.log('Iniciando submissão do formulário:', data)
+
     if (!userProfile?.id) {
       toast({
         title: 'Erro',
@@ -165,20 +196,26 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
 
     try {
       if (data.paymentMethod === 'pix') {
-        const result = await orderService.createOrder({
+        console.log('Iniciando pagamento PIX')
+        const orderData = {
           userId: userProfile.id,
           items,
-          customerData: data,
-          paymentMethod: 'pix',
-        })
+          customerData: {
+            name: data.name,
+            email: data.email,
+            taxId: data.taxId,
+            phone: data.phone,
+          },
+          paymentMethod: 'pix' as const,
+        }
 
-        console.log('Resposta do PagBank:', result)
+        console.log('Dados do pedido:', orderData)
+        const result = await orderService.createOrder(orderData)
 
-        if (!result.qr_codes?.[0]) {
+        if (!result?.qr_codes?.[0]) {
           throw new Error('QR Code não gerado')
         }
 
-        // Encontra a URL do QR code PNG
         const qrCodePngLink = result.qr_codes[0].links.find(
           (link: { rel: string; href: string }) => link.rel === 'QRCODE.PNG',
         )
@@ -190,8 +227,7 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
         setPixCode(result.qr_codes[0].text)
         setQrCodeUrl(qrCodePngLink.href)
         setOrderId(result.id)
-        clearCart()
-      } else {
+      } else if (data.paymentMethod === 'credit_card') {
         if (!data.card) {
           toast({
             title: 'Erro',
@@ -201,15 +237,68 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
           return
         }
 
-        await orderService.createOrder({
-          userId: userProfile.id,
-          items,
-          customerData: data,
-          paymentMethod: 'credit_card',
-          card: data.card,
+        // Verifica se o SDK do PagBank está disponível
+        if (!window.PagSeguro) {
+          toast({
+            title: 'Erro',
+            description:
+              'SDK do PagBank não carregado. Tente novamente em alguns instantes.',
+            variant: 'destructive',
+          })
+          return
+        }
+
+        // Criptografa os dados do cartão usando o SDK do PagBank
+        const card = window.PagSeguro.encryptCard({
+          publicKey: process.env.NEXT_PUBLIC_PAGBANK_PUBLIC_KEY || '',
+          holder: data.card.holder.name,
+          number: data.card.number,
+          expMonth: data.card.exp_month,
+          expYear: data.card.exp_year,
+          securityCode: data.card.security_code,
         })
 
-        handlePaymentSuccess()
+        if (card.hasErrors) {
+          console.error('Erros na criptografia do cartão:', card.errors)
+          const errorMessages = card.errors.map((e) => e.message).join(', ')
+          toast({
+            title: 'Erro',
+            description: `Dados do cartão inválidos: ${errorMessages}`,
+            variant: 'destructive',
+          })
+          return
+        }
+
+        try {
+          await orderService.createOrder({
+            userId: userProfile.id,
+            items,
+            customerData: data,
+            paymentMethod: 'credit_card',
+            card: {
+              encryptedCard: card.encryptedCard,
+              number: data.card.number,
+              exp_month: data.card.exp_month,
+              exp_year: data.card.exp_year,
+              security_code: data.card.security_code,
+              holder: {
+                name: data.card.holder.name,
+              },
+            },
+          })
+
+          handlePaymentSuccess()
+        } catch (error) {
+          console.error('Erro ao processar pagamento:', error)
+          toast({
+            title: 'Erro',
+            description:
+              error instanceof Error
+                ? error.message
+                : 'Erro ao processar pagamento',
+            variant: 'destructive',
+          })
+        }
       }
     } catch (error) {
       console.error('Erro ao processar pedido:', error)
@@ -349,7 +438,18 @@ export function CheckoutDialog({ open, onClose }: CheckoutDialogProps) {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(
+                (data) => {
+                  console.log('Form válido, dados:', data)
+                  onSubmit(data)
+                },
+                (errors) => {
+                  console.log('Erros de validação:', errors)
+                },
+              )}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"

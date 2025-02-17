@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -16,7 +17,6 @@ api.interceptors.request.use((request) => {
   console.log('Request to PagBank:', {
     url: request.url,
     method: request.method,
-    headers: request.headers,
     data: request.data,
   })
   return request
@@ -40,12 +40,53 @@ api.interceptors.response.use(
   },
 )
 
+async function updatePaymentStatus(
+  supabase: any,
+  orderId: string,
+  status: string,
+  paymentData: any,
+) {
+  const paymentStatus =
+    status === 'PAID'
+      ? 'approved'
+      : status === 'DECLINED'
+        ? 'declined'
+        : 'pending'
+
+  const { error } = await supabase
+    .from('payments')
+    .update({
+      status: paymentStatus,
+      payment_details: paymentData,
+      external_id: paymentData.id,
+    })
+    .eq('order_id', orderId)
+
+  if (error) {
+    console.error('Erro ao atualizar pagamento:', error)
+    return false
+  }
+
+  if (status === 'PAID') {
+    const { error: orderError } = await supabase
+      .from('orders')
+      .update({ status: 'paid' })
+      .eq('id', orderId)
+
+    if (orderError) {
+      console.error('Erro ao atualizar pedido:', orderError)
+      return false
+    }
+  }
+
+  return true
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const supabase = createRouteHandlerClient({ cookies })
 
-    // Verifica autenticação
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -54,34 +95,11 @@ export async function POST(request: Request) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    // Ajusta o formato dos dados antes de enviar para o PagBank
     if (body.customer?.taxId) {
       body.customer.tax_id = body.customer.taxId.replace(/\D/g, '')
       delete body.customer.taxId
     }
 
-    // Não precisa mais converter para centavos pois já vem convertido do frontend
-    // if (body.items) {
-    //   body.items.forEach((item: any) => {
-    //     if (item.unit_amount) {
-    //       item.unit_amount = Math.round(item.unit_amount * 100)
-    //     }
-    //   })
-    // }
-
-    // if (body.charges) {
-    //   body.charges.forEach((charge: any) => {
-    //     if (charge.amount?.value) {
-    //       charge.amount.value = Math.round(charge.amount.value * 100)
-    //     }
-    //     // Adiciona o parâmetro capture para cartão de crédito
-    //     if (charge.payment_method?.type === 'CREDIT_CARD') {
-    //       charge.payment_method.capture = true
-    //     }
-    //   })
-    // }
-
-    // Faz a chamada para o PagBank
     const response = await api.post('/orders', body)
 
     console.log('Resposta do PagBank:', {
@@ -91,51 +109,14 @@ export async function POST(request: Request) {
       paymentMethod: response.data.charges?.[0]?.payment_method?.type,
     })
 
-    // Atualiza o status do pagamento no banco de dados
-    if (response.data.charges?.[0]?.status === 'PAID') {
-      console.log('Atualizando status para approved...')
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          status: 'approved',
-          payment_details: response.data,
-          external_id: response.data.id,
-        })
-        .eq('order_id', body.reference_id)
-
-      if (error) {
-        console.error('Erro ao atualizar pagamento:', error)
-      } else {
-        console.log('Status do pagamento atualizado com sucesso')
-      }
-
-      // Atualiza o status do pedido para 'paid'
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({ status: 'paid' })
-        .eq('id', body.reference_id)
-
-      if (orderError) {
-        console.error('Erro ao atualizar pedido:', orderError)
-      } else {
-        console.log('Status do pedido atualizado com sucesso')
-      }
-    } else if (response.data.charges?.[0]?.status === 'DECLINED') {
-      console.log('Atualizando status para declined...')
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          status: 'declined',
-          payment_details: response.data,
-          external_id: response.data.id,
-        })
-        .eq('order_id', body.reference_id)
-
-      if (error) {
-        console.error('Erro ao atualizar pagamento:', error)
-      } else {
-        console.log('Status do pagamento atualizado com sucesso')
-      }
+    const status = response.data.charges?.[0]?.status
+    if (status) {
+      await updatePaymentStatus(
+        supabase,
+        body.reference_id,
+        status,
+        response.data,
+      )
     }
 
     return NextResponse.json(response.data)
@@ -148,7 +129,6 @@ export async function POST(request: Request) {
         config: {
           url: error.config?.url,
           baseURL: error.config?.baseURL,
-          headers: error.config?.headers,
         },
       })
 

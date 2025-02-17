@@ -17,7 +17,9 @@ interface CreateOrderParams {
     }
   }
   paymentMethod: 'pix' | 'credit_card'
+  orderId?: string
   card?: {
+    encryptedCard: string
     number: string
     exp_month: string
     exp_year: string
@@ -37,46 +39,46 @@ export class OrderService {
     customerData,
     paymentMethod,
     card,
+    orderId,
   }: CreateOrderParams) {
     const supabase = createClientComponentClient<Database>()
-    const orderId = uuidv4()
-
-    // Calcula o valor total
+    let existingOrderId = orderId
     const totalAmount = items.reduce(
       (total, item) => total + item.price * item.quantity,
       0,
     )
 
     try {
-      // Cria o pedido
-      const { error: orderError } = await supabase.from('orders').insert({
-        id: orderId,
-        user_id: userId,
-        store_id: items[0].store_id,
-        total_amount: totalAmount,
-        status: 'pending',
-      })
+      if (!existingOrderId) {
+        existingOrderId = uuidv4()
 
-      if (orderError) throw orderError
+        const { error: orderError } = await supabase.from('orders').insert({
+          id: existingOrderId,
+          user_id: userId,
+          store_id: items[0].store_id,
+          total_amount: totalAmount,
+          status: 'pending',
+        })
 
-      // Cria os itens do pedido
-      const { error: itemsError } = await supabase.from('order_items').insert(
-        items.map((item) => ({
-          order_id: orderId,
-          product_id: item.id,
-          quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.price * item.quantity,
-        })),
-      )
+        if (orderError) throw orderError
 
-      if (itemsError) throw itemsError
+        const { error: itemsError } = await supabase.from('order_items').insert(
+          items.map((item) => ({
+            order_id: existingOrderId,
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: item.price,
+            total_price: item.price * item.quantity,
+          })),
+        )
 
-      // Processa o pagamento com o PagBank
+        if (itemsError) throw itemsError
+      }
+
       let pagBankResult
       if (paymentMethod === 'credit_card' && card) {
         pagBankResult = await PagBankService.createCreditCardOrder({
-          orderId,
+          orderId: existingOrderId,
           amount: totalAmount,
           items: items.map((item) => ({
             name: item.name,
@@ -96,14 +98,23 @@ export class OrderService {
               },
             ],
           },
-          card,
+          card: {
+            encrypted: card.encryptedCard,
+            holder: {
+              name: card.holder.name,
+            },
+          },
         })
 
-        // Cria o registro de pagamento com o status correto
         const initialStatus =
-          pagBankResult.charges?.[0]?.status === 'PAID' ? 'approved' : 'pending'
-        const { error: paymentError } = await supabase.from('payments').insert({
-          order_id: orderId,
+          pagBankResult.charges?.[0]?.status === 'PAID'
+            ? 'approved'
+            : pagBankResult.charges?.[0]?.status === 'DECLINED'
+              ? 'declined'
+              : 'pending'
+
+        const { error: paymentError } = await supabase.from('payments').upsert({
+          order_id: existingOrderId,
           amount: totalAmount,
           status: initialStatus,
           payment_method: paymentMethod,
@@ -113,12 +124,11 @@ export class OrderService {
 
         if (paymentError) throw paymentError
 
-        // Se o pagamento foi aprovado, atualiza o status do pedido
         if (pagBankResult.charges?.[0]?.status === 'PAID') {
           const { error: orderUpdateError } = await supabase
             .from('orders')
             .update({ status: 'paid' })
-            .eq('id', orderId)
+            .eq('id', existingOrderId)
 
           if (orderUpdateError) throw orderUpdateError
         }
@@ -126,7 +136,7 @@ export class OrderService {
         return pagBankResult
       } else if (paymentMethod === 'pix') {
         pagBankResult = await PagBankService.createOrder({
-          orderId,
+          orderId: existingOrderId,
           amount: totalAmount,
           items: items.map((item) => ({
             name: item.name,
@@ -148,9 +158,8 @@ export class OrderService {
           },
         })
 
-        // Cria o registro de pagamento para PIX
-        const { error: paymentError } = await supabase.from('payments').insert({
-          order_id: orderId,
+        const { error: paymentError } = await supabase.from('payments').upsert({
+          order_id: existingOrderId,
           amount: totalAmount,
           status: 'pending',
           payment_method: paymentMethod,
@@ -160,7 +169,6 @@ export class OrderService {
 
         if (paymentError) throw paymentError
 
-        // Retorna a resposta completa do PagBank
         return pagBankResult
       }
 
