@@ -1,35 +1,8 @@
-/* eslint-disable camelcase */
 import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
 import { Database } from '@/lib/database.types'
-import axios from 'axios'
 
-interface PagBankWebhookPayload {
-  id: string
-  reference_id: string
-  status: string
-  created_at: string
-  charges: Array<{
-    id: string
-    status: string
-    amount: {
-      value: number
-      currency: string
-    }
-    payment_method: {
-      type: string
-      installments: number
-    }
-  }>
-}
-
-const pagBankApi = axios.create({
-  baseURL: 'https://sandbox.api.pagseguro.com',
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
-  },
-})
+type PaymentStatus = Database['public']['Enums']['payment_status']
+type OrderStatus = Database['public']['Enums']['order_status']
 
 const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,98 +11,125 @@ const supabase = createClient<Database>(
 
 export async function POST(request: Request) {
   try {
-    const payload: PagBankWebhookPayload = await request.json()
-
+    const payload = await request.json()
     console.log('PagBank Webhook Payload:', payload)
 
-    const { reference_id, charges, id: transactionId } = payload
+    const pagbankId = payload.id // ID da ordem do PagBank
+    const isPaid = payload.charges?.[0]?.status === 'PAID'
 
-    try {
-      const { data: transactionData } = await pagBankApi.get(
-        `/orders/${transactionId}`,
-      )
-      console.log('Status verificado na API:', transactionData)
-
-      if (transactionData.reference_id !== reference_id) {
-        console.error('Reference ID não corresponde')
-        return new Response('Invalid transaction', { status: 400 })
-      }
-
-      const status =
-        transactionData.charges?.[0]?.status || charges?.[0]?.status
-
-      if (!status) {
-        console.error('Status não encontrado no payload:', payload)
-        return new Response('Status not found in payload', { status: 400 })
-      }
-
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .update({
-          status: mapPagBankStatus(status),
-          payment_details: transactionData,
-        })
-        .eq('order_id', reference_id)
-
-      if (paymentError) {
-        console.error('Erro ao atualizar pagamento:', paymentError)
-        return new Response('Error updating payment', { status: 500 })
-      }
-
-      if (status === 'PAID') {
-        const { error: orderError } = await supabase
-          .from('orders')
-          .update({ status: 'paid' })
-          .eq('id', reference_id)
-
-        if (orderError) {
-          console.error('Erro ao atualizar pedido:', orderError)
-          return new Response('Error updating order', { status: 500 })
-        }
-
-        const { data: order } = await supabase
-          .from('orders')
-          .select('user_id')
-          .eq('id', reference_id)
-          .single()
-
-        if (order) {
-          await supabase.from('notifications').insert({
-            user_id: order.user_id,
-            title: 'Pagamento confirmado! 🎉',
-            description: 'Seu pedido foi confirmado e está sendo preparado.',
-            status: 'unread',
-          })
-        }
-      }
-
-      return NextResponse.json({ received: true })
-    } catch (error) {
-      console.error('Erro ao verificar status na API do PagBank:', error)
-      return new Response('Error verifying transaction status', { status: 500 })
+    if (!isPaid) {
+      return new Response('Nenhuma atualização necessária', { status: 200 })
     }
+
+    // Buscar o pagamento pelo ID do PagBank
+    const { data: payment, error: paymentCheckError } = await supabase
+      .from('payments')
+      .select('id, order_id, payment_method')
+      .eq('pagbank_id', pagbankId)
+      .single()
+
+    if (paymentCheckError) {
+      console.error('Pagamento não encontrado:', paymentCheckError)
+      return new Response('Pagamento não encontrado', { status: 404 })
+    }
+
+    // Atualizar o status do pagamento
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .update({
+        status: 'PAID' as PaymentStatus,
+        updated_at: new Date().toISOString(),
+        response_data: payload,
+      })
+      .eq('id', payment.id)
+
+    if (paymentError) {
+      console.error('Erro ao atualizar pagamento:', paymentError)
+      return new Response('Erro ao atualizar pagamento', { status: 500 })
+    }
+
+    // Buscar o pedido com informações da loja
+    const { data: order, error: orderFetchError } = await supabase
+      .from('orders')
+      .select('id, user_id, store_id, total_amount')
+      .eq('id', payment.order_id)
+      .single()
+
+    if (orderFetchError) {
+      console.error('Erro ao buscar pedido:', orderFetchError)
+      return new Response('Erro ao buscar pedido', { status: 500 })
+    }
+
+    // Buscar informações da loja
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('admin_id')
+      .eq('id', order.store_id)
+      .single()
+
+    if (storeError) {
+      console.error('Erro ao buscar loja:', storeError)
+      return new Response('Erro ao buscar loja', { status: 500 })
+    }
+
+    // Atualizar o status do pedido
+    const { error: orderError } = await supabase
+      .from('orders')
+      .update({
+        status: 'paid' as OrderStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', payment.order_id)
+
+    if (orderError) {
+      console.error('Erro ao atualizar pedido:', orderError)
+      return new Response('Erro ao atualizar pedido', { status: 500 })
+    }
+
+    // Criar notificação para o cliente
+    if (payment.payment_method === 'PIX') {
+      const { error: customerNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: order.user_id,
+          title: 'Pagamento PIX aprovado! 🎉',
+          description:
+            'Seu pagamento via PIX foi aprovado e seu pedido está sendo preparado.',
+          status: 'unread',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (customerNotificationError) {
+        console.error(
+          'Erro ao criar notificação para o cliente:',
+          customerNotificationError,
+        )
+      }
+
+      // Criar notificação para o administrador da loja
+      const { error: adminNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: store.admin_id,
+          title: 'Novo pedido recebido! 🛍️',
+          description: `Novo pedido no valor de R$ ${Number(order.total_amount).toFixed(2)} foi pago via PIX.`,
+          status: 'unread',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (adminNotificationError) {
+        console.error(
+          'Erro ao criar notificação para o administrador:',
+          adminNotificationError,
+        )
+      }
+    }
+
+    return new Response('Webhook processado com sucesso', { status: 200 })
   } catch (error) {
-    console.error('Erro no webhook:', error)
-    return new Response('Error processing webhook', { status: 500 })
+    console.error('Erro ao processar webhook:', error)
+    return new Response('Erro ao processar webhook', { status: 500 })
   }
-}
-
-function mapPagBankStatus(
-  pagBankStatus: string,
-): Database['public']['Enums']['payment_status'] {
-  const statusMap: Record<
-    string,
-    Database['public']['Enums']['payment_status']
-  > = {
-    AUTHORIZED: 'processing',
-    PAID: 'approved',
-    DECLINED: 'declined',
-    CANCELED: 'cancelled',
-    REFUNDED: 'refunded',
-    PENDING: 'pending',
-    WAITING: 'pending',
-    PROCESSING: 'processing',
-  }
-
-  return statusMap[pagBankStatus] || 'pending'
 }

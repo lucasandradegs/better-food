@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/SideBar'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { LayoutDashboard, UserCog, LogOut, ChartArea } from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
@@ -18,6 +18,7 @@ export default function AuthLayout({
   const { user, isLoading, signOut } = useAuth()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
 
   const links = [
     {
@@ -64,6 +65,10 @@ export default function AuthLayout({
     return null
   }
 
+  const isCheckoutPage = pathname === '/checkout'
+
+  console.log(isCheckoutPage)
+
   return (
     <>
       <AuthHeader />
@@ -74,7 +79,11 @@ export default function AuthLayout({
         )}
       >
         <Sidebar open={open} setOpen={setOpen}>
-          <SidebarBody className="justify-between gap-10">
+          <SidebarBody
+            className={cn('justify-between gap-10', {
+              'hidden md:hidden': isCheckoutPage,
+            })}
+          >
             <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
               <div className="flex flex-col gap-2">
                 {links.map((link, idx) => (
@@ -93,9 +102,12 @@ export default function AuthLayout({
           className={cn(
             'w-full flex-1 overflow-auto p-4 md:p-8',
             'transition-[margin] duration-300 ease-in-out',
-            'md:ml-[68px]',
-            open ? 'md:ml-[200px]' : 'md:ml-[68px]',
             'bg-white dark:bg-[#161616]',
+            {
+              'md:ml-0': isCheckoutPage,
+              'md:ml-[68px]': !isCheckoutPage && !open,
+              'md:ml-[200px]': !isCheckoutPage && open,
+            },
           )}
         >
           <div className="flex flex-col gap-4 pt-20 md:pt-14">{children}</div>

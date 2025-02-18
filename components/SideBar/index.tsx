@@ -112,6 +112,9 @@ export const MobileSidebar = ({
         className={cn(
           'flex h-10 w-full flex-row items-center justify-between bg-neutral-100 px-4 py-4 md:hidden dark:bg-neutral-800',
           'fixed top-12 z-40 w-full',
+          {
+            hidden: className?.includes('hidden'),
+          },
         )}
         {...props}
       >

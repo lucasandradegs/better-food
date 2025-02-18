@@ -1,9 +1,10 @@
+/* eslint-disable @next/next/no-sync-scripts */
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono as GeistMono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/contexts/CartContext'
-import { ForcedLightThemeProvider } from './components/ForcedLightThemeProvider'
+import { ForcedLightThemeProvider } from '@/components/ForcedLightThemeProvider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,10 +37,7 @@ export default function RootLayout({
             <CartProvider>{children}</CartProvider>
           </AuthProvider>
         </ForcedLightThemeProvider>
-        <script
-          src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"
-          async
-        />
+        <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js" />
       </body>
     </html>
   )
