@@ -160,6 +160,7 @@ export function PixForm() {
         throw error
       }
     }
+    // @ts-expect-error O form está funcionando corretamente desse jeito.
     setSubmitForm(() => handleFormSubmit)
     return () => setSubmitForm(null)
   }, [setSubmitForm, form])

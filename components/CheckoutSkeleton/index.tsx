@@ -43,7 +43,7 @@ export function CheckoutSkeleton() {
           </div>
         </div>
       </div>
-      <div>
+      <div className="rounded-md border p-4">
         <Skeleton className="mb-4 h-3 w-36" />
         <div className="mt-4 flex flex-col gap-4">
           <div>

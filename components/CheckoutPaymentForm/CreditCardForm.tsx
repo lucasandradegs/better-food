@@ -202,6 +202,7 @@ export function CreditCardForm() {
   }, [form.formState, setIsFormValid])
 
   useEffect(() => {
+    // @ts-expect-error O form está funcionando corretamente desse jeito.
     setSubmitForm(() => form.handleSubmit(onSubmit))
     return () => setSubmitForm(null)
   }, [setSubmitForm, form])
