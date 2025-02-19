@@ -57,7 +57,7 @@ function CheckoutContent() {
           Você pode acompanhar seus pedidos na aba &quot;Meus pedidos&quot;
         </p>
         <div className="flex gap-4">
-          <Link href="/orders">
+          <Link href="/pedidos">
             <Button variant="outline">Ver meus pedidos</Button>
           </Link>
           <Link href="/inicio">

@@ -82,7 +82,7 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
 
       <div className="mt-2 flex w-full flex-col gap-1.5 border-t pt-3 text-center text-xs text-muted-foreground sm:mt-3 sm:gap-2 sm:pt-4 sm:text-sm">
         <p>Já realizou o pagamento?</p>
-        <Link href="/orders" className="w-full">
+        <Link href="/pedidos" className="w-full">
           <Button
             variant="default"
             className="h-9 w-full text-xs sm:h-10 sm:text-sm"

@@ -4,7 +4,10 @@
 
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  margin: 0 !important;
 }
+
+
 
 
 @layer base {

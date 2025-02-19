@@ -22,7 +22,7 @@ const categories = [
   },
   {
     name: 'Italiana',
-    image: '/macarrao1.png',
+    image: '/macarraoQ.png',
     bgColor: 'bg-green-100',
   },
   {
@@ -59,8 +59,11 @@ export function Categories() {
               <Image
                 src={category.image || '/placeholder.svg'}
                 alt={category.name}
-                width={80}
-                height={80}
+                width={256}
+                height={256}
+                quality={100}
+                priority
+                sizes="(max-width: 640px) 33vw, 16vw"
                 className="h-full w-full object-contain"
               />
             </div>
@@ -83,8 +86,8 @@ export function Categories() {
                     <Image
                       src={category.image || '/placeholder.svg'}
                       alt={category.name}
-                      width={80}
-                      height={80}
+                      width={256}
+                      height={256}
                       className="h-full w-full object-contain"
                       priority
                     />

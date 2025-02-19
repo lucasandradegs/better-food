@@ -3,8 +3,14 @@
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/SideBar'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { LayoutDashboard, UserCog, LogOut, ChartArea } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import {
+  LayoutDashboard,
+  UserCog,
+  LogOut,
+  ChartArea,
+  Package,
+} from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
 import { Toaster } from '@/components/ui/toaster'
@@ -29,11 +35,20 @@ export default function AuthLayout({
       ),
     },
     {
+      label: 'Pedidos',
+      href: '/pedidos',
+      icon: (
+        <Package className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+      divider: true,
+    },
+    {
       label: 'Perfil',
       href: '/perfil',
       icon: (
         <UserCog className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
+      divider: true,
     },
     {
       label: 'Sair',
@@ -87,7 +102,12 @@ export default function AuthLayout({
             <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
               <div className="flex flex-col gap-2">
                 {links.map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
+                  <React.Fragment key={idx}>
+                    <SidebarLink link={link} />
+                    {link.divider && (
+                      <div className="h-[1px] bg-neutral-200 dark:bg-neutral-700" />
+                    )}
+                  </React.Fragment>
                 ))}
                 <RoleGuard allowedRoles={['admin']}>
                   {adminLinks.map((link, idx) => (

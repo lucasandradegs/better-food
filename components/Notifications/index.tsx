@@ -21,6 +21,9 @@ type Notification = Database['public']['Tables']['notifications']['Row']
 export function NotificationsPopover() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'read'>(
+    'all',
+  )
   const { userProfile } = useAuth()
   const supabase = createClientComponentClient<Database>()
 
@@ -121,6 +124,12 @@ export function NotificationsPopover() {
     }
   }
 
+  const filteredNotifications = notifications.filter((notification) => {
+    if (activeFilter === 'all') return true
+    if (activeFilter === 'unread') return notification.status === 'unread'
+    return notification.status === 'read'
+  })
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -134,41 +143,83 @@ export function NotificationsPopover() {
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-screen p-0 md:w-[400px] dark:bg-[#161616]"
+        className="w-screen p-0 dark:bg-[#161616] md:w-[400px]"
         align="end"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="flex items-center justify-between border-b p-4">
-          <h4 className="font-semibold">Notificações</h4>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              className="h-auto px-2 py-1 text-xs"
-              onClick={markAllAsRead}
-              tabIndex={-1}
+        <div className="flex flex-col border-b">
+          <div className="flex items-center justify-between p-4">
+            <h4 className="font-semibold">Notificações</h4>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                className="h-auto px-2 py-1 text-xs"
+                onClick={markAllAsRead}
+                tabIndex={-1}
+              >
+                Marcar todas como lidas
+              </Button>
+            )}
+          </div>
+          <div className="flex border-t">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={cn(
+                'flex-1 border-b-2 p-2 text-sm transition-colors',
+                activeFilter === 'all'
+                  ? 'border-red-500 font-medium'
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+              )}
             >
-              Marcar todas como lidas
-            </Button>
-          )}
+              Todas
+            </button>
+            <button
+              onClick={() => setActiveFilter('unread')}
+              className={cn(
+                'flex-1 border-b-2 p-2 text-sm transition-colors',
+                activeFilter === 'unread'
+                  ? 'border-red-500 font-medium'
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+              )}
+            >
+              Não lidas
+            </button>
+            <button
+              onClick={() => setActiveFilter('read')}
+              className={cn(
+                'flex-1 border-b-2 p-2 text-sm transition-colors',
+                activeFilter === 'read'
+                  ? 'border-red-500 font-medium'
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+              )}
+            >
+              Lidas
+            </button>
+          </div>
         </div>
         <ScrollArea className="h-screen md:h-[300px]">
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <div className="flex h-full items-center justify-center p-4 text-sm text-gray-500">
-              Nenhuma notificação
+              {activeFilter === 'unread'
+                ? 'Parabéns! Você leu todas as notificações 🎉'
+                : activeFilter === 'read'
+                  ? 'Você ainda não tem notificações lidas'
+                  : 'Você ainda não tem notificações'}
             </div>
           ) : (
             <div className="grid gap-1">
-              {notifications.map((notification) => (
+              {filteredNotifications.map((notification) => (
                 <button
                   key={notification.id}
                   className={cn(
                     'flex flex-col gap-1 p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800',
                     notification.status === 'unread' &&
-                      'bg-gray-50 dark:bg-gray-900',
+                      'bg-blue-50 dark:bg-[#262626]',
                   )}
                   onClick={() => markAsRead(notification.id)}
                   tabIndex={-1}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
                     <div className="flex h-9 min-w-9 items-center justify-center rounded-sm bg-blue-200">
                       <Bell className="h-4 w-4" />
                     </div>

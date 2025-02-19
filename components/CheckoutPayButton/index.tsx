@@ -246,7 +246,7 @@ export default function CheckoutPayButton() {
                 {paymentStatus !== 'processing' &&
                   !pixData &&
                   (paymentStatus === 'success' ? (
-                    <Link href="/orders" className="w-full">
+                    <Link href="/pedidos" className="w-full">
                       <Button className="mt-4 w-full">
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         Ver meus pedidos

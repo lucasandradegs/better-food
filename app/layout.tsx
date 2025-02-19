@@ -5,6 +5,7 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/contexts/CartContext'
 import { ForcedLightThemeProvider } from '@/components/ForcedLightThemeProvider'
+import { Toaster } from 'sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,6 +39,7 @@ export default function RootLayout({
           </AuthProvider>
         </ForcedLightThemeProvider>
         <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js" />
+        <Toaster richColors />
       </body>
     </html>
   )

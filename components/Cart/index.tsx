@@ -75,7 +75,10 @@ export function CartSheet() {
           )}
         </div>
       </SheetTrigger>
-      <SheetContent className="flex w-full flex-col p-0 dark:bg-[#262626] sm:max-w-lg">
+      <SheetContent
+        className="flex w-full flex-col p-0 dark:bg-[#262626] sm:max-w-lg"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <SheetHeader className="px-4 py-2">
           <SheetTitle className="mt-1 flex items-center gap-2 text-base font-medium">
             <ShoppingCart className="h-4 w-4" />

@@ -20,6 +20,20 @@ export async function POST(request: Request) {
       )
     }
 
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('admin_id')
+      .eq('id', storeId)
+      .single()
+
+    if (storeError) {
+      console.error('Erro ao buscar loja:', storeError)
+      return NextResponse.json(
+        { error: 'Erro ao buscar informações da loja' },
+        { status: 500 },
+      )
+    }
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -27,6 +41,7 @@ export async function POST(request: Request) {
         status: 'pending',
         store_id: storeId,
         user_id: user.id,
+        admin_id: store.admin_id,
       })
       .select('id')
       .single()
