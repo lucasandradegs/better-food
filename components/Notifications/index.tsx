@@ -21,6 +21,7 @@ type Notification = Database['public']['Tables']['notifications']['Row']
 export function NotificationsPopover() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'read'>(
     'all',
   )
@@ -30,8 +31,8 @@ export function NotificationsPopover() {
   useEffect(() => {
     if (!userProfile?.id) return
 
-    // Busca notificações iniciais
     const fetchNotifications = async () => {
+      setIsLoading(true)
       const { data } = await supabase
         .from('notifications')
         .select('*')
@@ -43,6 +44,7 @@ export function NotificationsPopover() {
         setNotifications(data)
         setUnreadCount(data.filter((n) => n.status === 'unread').length)
       }
+      setIsLoading(false)
     }
 
     fetchNotifications()
@@ -143,12 +145,12 @@ export function NotificationsPopover() {
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-screen p-0 dark:bg-[#161616] md:w-[400px]"
+        className="w-screen p-0 dark:border-[#343434] dark:bg-[#1c1c1c] md:w-[400px]"
         align="end"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="flex flex-col border-b">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between rounded-t-sm p-4 dark:bg-[#232323]">
             <h4 className="font-semibold">Notificações</h4>
             {unreadCount > 0 && (
               <Button
@@ -168,7 +170,7 @@ export function NotificationsPopover() {
                 'flex-1 border-b-2 p-2 text-sm transition-colors',
                 activeFilter === 'all'
                   ? 'border-red-500 font-medium'
-                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#232323]',
               )}
             >
               Todas
@@ -179,7 +181,7 @@ export function NotificationsPopover() {
                 'flex-1 border-b-2 p-2 text-sm transition-colors',
                 activeFilter === 'unread'
                   ? 'border-red-500 font-medium'
-                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#232323]',
               )}
             >
               Não lidas
@@ -190,7 +192,7 @@ export function NotificationsPopover() {
                 'flex-1 border-b-2 p-2 text-sm transition-colors',
                 activeFilter === 'read'
                   ? 'border-red-500 font-medium'
-                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
+                  : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#232323]',
               )}
             >
               Lidas
@@ -198,7 +200,27 @@ export function NotificationsPopover() {
           </div>
         </div>
         <ScrollArea className="h-screen md:h-[300px]">
-          {filteredNotifications.length === 0 ? (
+          {isLoading ? (
+            <div className="grid gap-1">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex animate-pulse flex-col gap-1 p-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-sm bg-gray-200 dark:bg-gray-800" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="h-4 w-2/3 rounded-sm bg-gray-200 dark:bg-gray-800" />
+                      <div className="h-3 w-full rounded-sm bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="h-3 w-24 rounded-sm bg-gray-200 dark:bg-gray-800" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <div className="flex h-full items-center justify-center p-4 text-sm text-gray-500">
               {activeFilter === 'unread'
                 ? 'Parabéns! Você leu todas as notificações 🎉'
@@ -212,15 +234,15 @@ export function NotificationsPopover() {
                 <button
                   key={notification.id}
                   className={cn(
-                    'flex flex-col gap-1 p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800',
+                    'flex flex-col gap-1 p-4 text-left hover:bg-gray-100 dark:hover:bg-[#232323]',
                     notification.status === 'unread' &&
                       'bg-blue-50 dark:bg-[#262626]',
                   )}
                   onClick={() => markAsRead(notification.id)}
                   tabIndex={-1}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-9 min-w-9 items-center justify-center rounded-sm bg-blue-200">
+                  <div className="flex items-center gap-2 lg:gap-4">
+                    <div className="flex h-9 min-w-9 items-center justify-center rounded-sm bg-blue-200 dark:bg-[#323232]">
                       <Bell className="h-4 w-4" />
                     </div>
                     <div className="flex flex-col">

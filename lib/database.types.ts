@@ -216,6 +216,104 @@ export interface Database {
           updated_at?: string
         }
       }
+      coupons: {
+        Row: {
+          id: string
+          name: string
+          discount: number
+          amount_used: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          discount: number
+          amount_used?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          discount?: number
+          amount_used?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          store_id: string
+          admin_id: string
+          status: Database['public']['Enums']['order_status']
+          total_amount: number
+          coupon_id: string | null
+          discount_amount: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          store_id: string
+          admin_id: string
+          status?: Database['public']['Enums']['order_status']
+          total_amount: number
+          coupon_id?: string | null
+          discount_amount?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          store_id?: string
+          admin_id?: string
+          status?: Database['public']['Enums']['order_status']
+          total_amount?: number
+          coupon_id?: string | null
+          discount_amount?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'orders_admin_id_fkey'
+            columns: ['admin_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'orders_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'orders_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'orders_coupon_id_fkey'
+            columns: ['coupon_id']
+            isOneToOne: false
+            referencedRelation: 'coupons'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

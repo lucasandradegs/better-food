@@ -37,7 +37,10 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product) => (
-        <Card key={product.id} className="flex flex-col dark:bg-[#262626]">
+        <Card
+          key={product.id}
+          className="flex flex-col dark:border-[#343434] dark:bg-[#232323]"
+        >
           <CardHeader>
             <Image
               src={product.image_url || '/better-food.png'}
@@ -51,10 +54,10 @@ export function ProductGrid({ products }: ProductGridProps) {
             <CardTitle className="mb-1 text-base font-medium">
               {product.name}
             </CardTitle>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {product.product_categories?.name}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs">
+            <p className="mt-2 text-xs text-muted-foreground">
               {product.description}
             </p>
           </CardContent>

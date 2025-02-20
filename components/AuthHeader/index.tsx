@@ -11,7 +11,7 @@ export function AuthHeader() {
 
   return (
     <header
-      className={`fixed top-0 z-50 w-full border-b border-b-gray-200 bg-[#f5f5f5] backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-b-[#2e2e2e] dark:bg-neutral-800 ${RemoveScroll.classNames.zeroRight}`}
+      className={`fixed top-0 z-50 w-full border-b border-b-[#dfdfdf] bg-[#f8f8f8] dark:border-b-[#343434] dark:bg-[#1c1c1c] ${RemoveScroll.classNames.zeroRight}`}
     >
       <div className="mx-auto flex h-12 items-center justify-between scroll-smooth px-4">
         <Image src="/betterfood.png" alt="Logo" width={40} height={40} />

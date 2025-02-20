@@ -63,12 +63,12 @@ export function FeaturedRestaurants() {
           {[1, 2, 3, 4].map((i) => (
             <Card
               key={i}
-              className="overflow-hidden transition-all duration-300 hover:scale-[102%] hover:shadow-lg dark:bg-gray-800"
+              className="overflow-hidden transition-all duration-300 hover:scale-[102%] hover:shadow-lg dark:bg-[#262626]"
             >
-              <div className="h-48 w-full animate-pulse bg-gray-200 dark:bg-gray-700" />
+              <div className="h-48 w-full animate-pulse bg-gray-200 dark:bg-[#232323]" />
               <CardContent className="p-4">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-[#232323]" />
+                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-[#232323]" />
               </CardContent>
             </Card>
           ))}
@@ -93,7 +93,7 @@ export function FeaturedRestaurants() {
             href={`/inicio/${generateSlug(store.name)}`}
             className="block"
           >
-            <Card className="overflow-hidden transition-all duration-300 hover:scale-[102%] hover:shadow-lg dark:bg-gray-800">
+            <Card className="overflow-hidden transition-all duration-300 hover:scale-[102%] hover:shadow-lg dark:border-[#343434] dark:bg-[#262626]">
               <div className="relative h-48 w-full">
                 <Image
                   src={store.logo_url || '/placeholder-restaurant.png'}
@@ -105,7 +105,7 @@ export function FeaturedRestaurants() {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 />
               </div>
-              <CardContent className="p-4 dark:bg-[#262626]">
+              <CardContent className="p-4 dark:bg-[#232323]">
                 <h3 className="mb-2 font-semibold dark:text-white">
                   {store.name}
                 </h3>

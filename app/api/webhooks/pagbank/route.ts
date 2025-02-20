@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     // Buscar o pedido com informações da loja
     const { data: order, error: orderFetchError } = await supabase
       .from('orders')
-      .select('id, user_id, store_id, total_amount')
+      .select('id, user_id, store_id, total_amount, coupon_id')
       .eq('id', payment.order_id)
       .single()
 
@@ -84,6 +84,38 @@ export async function POST(request: Request) {
     if (orderError) {
       console.error('Erro ao atualizar pedido:', orderError)
       return new Response('Erro ao atualizar pedido', { status: 500 })
+    }
+
+    // Incrementar o contador de pedidos da loja
+    const { error: storeUpdateError } = await supabase.rpc(
+      'increment_orders_count',
+      {
+        store_id_param: order.store_id,
+      },
+    )
+
+    if (storeUpdateError) {
+      console.error(
+        'Erro ao atualizar contador de pedidos da loja:',
+        storeUpdateError,
+      )
+      // Não retornamos erro aqui para não impactar o fluxo principal
+    }
+
+    // Se existe um cupom no pedido, atualiza o contador
+    if (order.coupon_id) {
+      const { data: coupon } = await supabase
+        .from('coupons')
+        .select('amount_used')
+        .eq('id', order.coupon_id)
+        .single()
+
+      if (coupon) {
+        await supabase
+          .from('coupons')
+          .update({ amount_used: (coupon.amount_used || 0) + 1 })
+          .eq('id', order.coupon_id)
+      }
     }
 
     // Criar notificação para o cliente

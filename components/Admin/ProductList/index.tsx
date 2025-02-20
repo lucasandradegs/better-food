@@ -167,36 +167,40 @@ export function ProductList({
   }
 
   return (
-    <div className="rounded-lg bg-white shadow dark:bg-[#262626]">
+    <div className="rounded-lg bg-white shadow dark:border dark:border-[#343434] dark:bg-[#262626]">
       <div className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold dark:text-white">Produtos</h2>
+          <h2 className="text-base font-semibold dark:text-white">Produtos</h2>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <Input
                 placeholder="Buscar produto..."
-                className="pl-8"
+                className="pl-8 dark:border-[#343434]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button
+                  variant="outline"
+                  className="dark:border-[#343434] dark:bg-[#262626]"
+                >
                   {selectedCategory === 'all'
                     ? 'Todas as Categorias'
                     : selectedCategory}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="dark:border-[#343434] dark:bg-[#262626]">
                 <DropdownMenuItem onClick={() => setSelectedCategory('all')}>
                   Todas as Categorias
                 </DropdownMenuItem>
                 {productCategories.map((category) => (
                   <DropdownMenuItem
                     key={category.id}
+                    className="hover:bg-gray-100 dark:hover:bg-[#343434]"
                     onClick={() => setSelectedCategory(category.name)}
                   >
                     {category.name}
@@ -253,6 +257,7 @@ export function ProductList({
                       variant={
                         product.is_available ? 'secondary' : 'destructive'
                       }
+                      className="dark:border-[#343434] dark:bg-[#1c1c1c]"
                     >
                       {product.is_available ? 'Disponível' : 'Indisponível'}
                     </Badge>
@@ -271,7 +276,7 @@ export function ProductList({
                         size="icon"
                         onClick={() => setProductToDelete(product)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
                   </td>
@@ -295,7 +300,7 @@ export function ProductList({
         open={!!productToDelete}
         onOpenChange={() => setProductToDelete(null)}
       >
-        <AlertDialogContent className="w-[85%] rounded-lg lg:w-full dark:bg-[#262626]">
+        <AlertDialogContent className="w-[85%] rounded-lg dark:border-[#343434] dark:bg-[#1c1c1c] lg:w-full">
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -305,7 +310,9 @@ export function ProductList({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="dark:border-[#343434] dark:bg-[#262626]">
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600"

@@ -40,7 +40,7 @@ export function SidebarLink({
       className={cn(
         'group/sidebar flex items-center justify-start gap-2 rounded-md px-2 py-2 transition-colors',
         'hover:bg-neutral-200 dark:hover:bg-neutral-700',
-        'aria-[current=page]:bg-neutral-300 dark:aria-[current=page]:bg-neutral-600',
+        'aria-[current=page]:bg-[#ededed] dark:aria-[current=page]:bg-neutral-600',
         className,
       )}
       onClick={link.onClick}

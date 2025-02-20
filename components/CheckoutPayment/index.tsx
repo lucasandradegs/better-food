@@ -17,8 +17,10 @@ export default function CheckoutPayment() {
       <h1 className="text-sm font-medium">Pagamento</h1>
       <div className="mt-4 flex flex-row items-center gap-2">
         <div
-          className={`flex h-32 w-full cursor-pointer flex-col items-center justify-between gap-2 rounded-md border p-2 ${
-            paymentMethod === 'CREDIT_CARD' ? 'border-red-500' : ''
+          className={`flex h-32 w-full cursor-pointer flex-col items-center justify-between gap-2 rounded-md border p-2 dark:border-[#343434] ${
+            paymentMethod === 'CREDIT_CARD'
+              ? 'border-red-500 dark:border-red-500'
+              : ''
           }`}
           onClick={() => setPaymentMethod('CREDIT_CARD')}
         >
@@ -32,8 +34,8 @@ export default function CheckoutPayment() {
           </div>
         </div>
         <div
-          className={`flex h-32 w-full cursor-pointer flex-col items-center justify-between gap-2 rounded-md border p-2 ${
-            paymentMethod === 'PIX' ? 'border-red-500' : ''
+          className={`flex h-32 w-full cursor-pointer flex-col items-center justify-between gap-2 rounded-md border p-2 dark:border-[#343434] ${
+            paymentMethod === 'PIX' ? 'border-red-500 dark:border-red-500' : ''
           }`}
           onClick={() => setPaymentMethod('PIX')}
         >

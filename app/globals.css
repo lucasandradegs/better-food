@@ -80,3 +80,37 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+@layer utilities {
+  .grid-areas-mobile {
+    grid-template-areas:
+      "header"
+      "main";
+  }
+
+  .grid-areas-desktop {
+    grid-template-areas:
+      "header header"
+      "sidebar main";
+  }
+
+  .grid-cols-sidebar {
+    grid-template-columns: 68px 1fr;
+  }
+
+  .grid-rows-header {
+    grid-template-rows: 48px 1fr;
+  }
+
+  .grid-in-header {
+    grid-area: header;
+  }
+
+  .grid-in-sidebar {
+    grid-area: sidebar;
+  }
+
+  .grid-in-main {
+    grid-area: main;
+  }
+}

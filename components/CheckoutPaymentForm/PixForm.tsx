@@ -169,7 +169,7 @@ export function PixForm() {
     <Form {...form}>
       <form className="">
         <h1 className="text-sm font-medium">Preencha seus dados</h1>
-        <div className="mt-4 flex flex-col gap-2 rounded-md border p-4">
+        <div className="mt-4 flex flex-col gap-2 rounded-md border p-4 dark:border-[#343434]">
           <FormField
             control={form.control}
             name="name"

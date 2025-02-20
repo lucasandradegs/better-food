@@ -241,7 +241,7 @@ export function ProductForm({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-h-[90vh] w-[85%] overflow-y-auto rounded-lg lg:max-w-[625px] dark:bg-[#262626]">
+      <DialogContent className="max-h-[90vh] w-[85%] overflow-y-auto rounded-lg dark:border-[#343434] dark:bg-[#1c1c1c] lg:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>
             {productToEdit ? 'Editar Produto' : 'Adicionar Novo Produto'}
@@ -303,7 +303,7 @@ export function ProductForm({
                 <SelectTrigger className="text-sm dark:bg-[#161616]">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="dark:bg-[#161616]">
                   {productCategories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -357,18 +357,10 @@ export function ProductForm({
               type="button"
               variant="outline"
               onClick={() => {
+                if (onClose) onClose()
                 setIsEditDialogOpen(false)
-                setImagePreview(null)
-                setFormData({
-                  name: '',
-                  price: '',
-                  category_id: '',
-                  is_available: true,
-                  image: null,
-                  description: '',
-                })
               }}
-              className="w-full bg-transparent sm:w-auto"
+              className="w-full bg-transparent dark:border-[#343434] sm:w-auto"
             >
               Cancelar
             </Button>

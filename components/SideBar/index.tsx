@@ -81,15 +81,16 @@ export const DesktopSidebar = ({
   return (
     <motion.div
       className={cn(
-        'hidden h-screen w-[180px] flex-shrink-0 bg-neutral-100 px-4 py-4 md:flex md:flex-col dark:border-r-[1px] dark:border-r-[#2e2e2e] dark:bg-neutral-800',
-        'fixed top-12',
+        'hidden h-screen w-[180px] flex-shrink-0 border-r-[1px] border-r-[#dfdfdf] bg-[#f8f8f8] px-4 py-4 dark:border-r-[1px] dark:border-r-[#343434] dark:bg-[#1c1c1c] md:flex md:flex-col',
+        'fixed top-12 z-10',
+        open ? 'shadow-2xl' : '',
         className,
       )}
       initial={{
-        width: animate ? '68px' : '200px',
+        width: animate ? '68px' : '210px',
       }}
       animate={{
-        width: animate ? (open ? '200px' : '68px') : '200px',
+        width: animate ? (open ? '210px' : '68px') : '210px',
       }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -110,7 +111,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          'flex h-10 w-full flex-row items-center justify-between bg-neutral-100 px-4 py-4 md:hidden dark:bg-neutral-800',
+          'flex h-10 w-full flex-row items-center justify-between bg-neutral-100 px-4 py-4 dark:bg-neutral-800 md:hidden',
           'fixed top-12 z-40 w-full',
           {
             hidden: className?.includes('hidden'),

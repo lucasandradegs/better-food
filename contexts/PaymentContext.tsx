@@ -73,6 +73,7 @@ interface Order {
   total_amount: number
   status: Database['public']['Enums']['order_status']
   items: OrderItem[]
+  discount_amount: number
 }
 
 interface QRCodeLink {
@@ -153,7 +154,7 @@ export function PaymentProvider({
         // Buscar informações do pedido
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
-          .select('*')
+          .select('id, total_amount, status, discount_amount')
           .eq('id', orderId)
           .single()
 
@@ -219,7 +220,7 @@ export function PaymentProvider({
     fetchOrderAndPayment()
   }, [orderId, supabase])
 
-  // Calcula o valor final considerando o desconto do PIX
+  // Calcula o valor final considerando o desconto do PIX e do cupom
   const finalAmount = order
     ? paymentMethod === 'PIX'
       ? order.total_amount * 0.95

@@ -82,55 +82,62 @@ export default function AuthLayout({
 
   const isCheckoutPage = pathname === '/checkout'
 
-  console.log(isCheckoutPage)
-
   return (
     <>
-      <AuthHeader />
       <div
         className={cn(
-          'flex min-h-screen w-full bg-white dark:bg-neutral-800',
-          'flex-col md:flex-row',
+          'grid min-h-screen w-full',
+          'grid-areas-mobile md:grid-areas-desktop',
+          'md:grid-cols-sidebar grid-cols-1',
+          'grid-rows-header',
+          'bg-[#f8f8f8] dark:bg-[#1c1c1c]',
         )}
       >
-        <Sidebar open={open} setOpen={setOpen}>
-          <SidebarBody
-            className={cn('justify-between gap-10', {
-              'hidden md:hidden': isCheckoutPage,
-            })}
-          >
-            <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-              <div className="flex flex-col gap-2">
-                {links.map((link, idx) => (
-                  <React.Fragment key={idx}>
-                    <SidebarLink link={link} />
-                    {link.divider && (
-                      <div className="h-[1px] bg-neutral-200 dark:bg-neutral-700" />
-                    )}
-                  </React.Fragment>
-                ))}
-                <RoleGuard allowedRoles={['admin']}>
-                  {adminLinks.map((link, idx) => (
-                    <SidebarLink key={`admin-${idx}`} link={link} />
+        <header className="grid-in-header">
+          <AuthHeader />
+        </header>
+
+        <aside
+          className={cn('grid-in-sidebar', 'h-full', {
+            'hidden md:block': !isCheckoutPage,
+            hidden: isCheckoutPage,
+          })}
+        >
+          <Sidebar open={open} setOpen={setOpen}>
+            <SidebarBody
+              className={cn('justify-between gap-10', {
+                'hidden md:hidden': isCheckoutPage,
+              })}
+            >
+              <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+                <div className="flex flex-col gap-2">
+                  {links.map((link, idx) => (
+                    <React.Fragment key={idx}>
+                      <SidebarLink link={link} />
+                      {link.divider && (
+                        <div className="h-[1px] bg-[#dfdfdf] dark:bg-neutral-700" />
+                      )}
+                    </React.Fragment>
                   ))}
-                </RoleGuard>
+                  <RoleGuard allowedRoles={['admin']}>
+                    {adminLinks.map((link, idx) => (
+                      <SidebarLink key={`admin-${idx}`} link={link} />
+                    ))}
+                  </RoleGuard>
+                </div>
               </div>
-            </div>
-          </SidebarBody>
-        </Sidebar>
+            </SidebarBody>
+          </Sidebar>
+        </aside>
+
         <main
           className={cn(
-            'w-full flex-1 overflow-auto p-4 md:p-8',
-            'transition-[margin] duration-300 ease-in-out',
-            'bg-white dark:bg-[#161616]',
-            {
-              'md:ml-0': isCheckoutPage,
-              'md:ml-[68px]': !isCheckoutPage && !open,
-              'md:ml-[200px]': !isCheckoutPage && open,
-            },
+            'grid-in-main',
+            'w-full overflow-auto p-4 md:p-8',
+            'bg-[#f8f8f8] dark:bg-[#1c1c1c]',
           )}
         >
-          <div className="flex flex-col gap-4 pt-20 md:pt-14">{children}</div>
+          <div className="flex flex-col gap-4">{children}</div>
         </main>
       </div>
       <Toaster />

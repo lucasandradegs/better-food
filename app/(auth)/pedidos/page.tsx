@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { OrderCard } from '@/components/OrderCard'
 
 type OrderItem = {
   id: string
@@ -65,6 +66,7 @@ type Order = {
   customer: {
     email: string
   }
+  discount_amount: number
 }
 
 const orderStatusMap: Record<
@@ -163,6 +165,8 @@ export default function Orders() {
   const [paymentFilter, setPaymentFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('all')
   const supabase = createClientComponentClient<Database>()
+
+  console.log(orders)
 
   useEffect(() => {
     async function checkUserRole() {
@@ -613,70 +617,69 @@ export default function Orders() {
     )
   }
 
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-2xl font-bold">
-        {isAdmin ? 'Gerenciar Pedidos' : 'Meus Pedidos'}
-      </h1>
+  // Se for admin, mostra a tabela
+  if (isAdmin) {
+    return (
+      <div className="container mx-auto py-8">
+        <h1 className="mb-6 text-2xl font-bold">Gerenciar Pedidos</h1>
 
-      <div className="mb-6 flex flex-wrap gap-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full lg:w-[180px]">
-            <SelectValue placeholder="Status do Pedido" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            {ALLOWED_STATUS_OPTIONS.map((status) => (
-              <SelectItem key={status} value={status}>
-                {orderStatusMap[status].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="mb-6 flex flex-wrap gap-4">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+              <SelectValue placeholder="Status do Pedido" />
+            </SelectTrigger>
+            <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+              <SelectItem value="all">Todos os Status</SelectItem>
+              {ALLOWED_STATUS_OPTIONS.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {orderStatusMap[status].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-          <SelectTrigger className="w-full lg:w-[180px]">
-            <SelectValue placeholder="Status do Pagamento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Pagamentos</SelectItem>
-            <SelectItem value="PAID">Pago</SelectItem>
-            <SelectItem value="PENDING">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+            <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+              <SelectValue placeholder="Status do Pagamento" />
+            </SelectTrigger>
+            <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+              <SelectItem value="all">Todos os Pagamentos</SelectItem>
+              <SelectItem value="PAID">Pago</SelectItem>
+              <SelectItem value="PENDING">Pendente</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-full lg:w-[180px]">
-            <SelectValue placeholder="Período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todo Período</SelectItem>
-            <SelectItem value="7days">Últimos 7 dias</SelectItem>
-            <SelectItem value="30days">Últimos 30 dias</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+              <SelectItem value="all">Todo Período</SelectItem>
+              <SelectItem value="7days">Últimos 7 dias</SelectItem>
+              <SelectItem value="30days">Últimos 30 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="rounded-md border">
-        <Table className="text-xs">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Pedido</TableHead>
-              {isAdmin && <TableHead>Cliente</TableHead>}
-              <TableHead>Itens</TableHead>
-              <TableHead>Valor Total</TableHead>
-              <TableHead>Status do Pagamento</TableHead>
-              <TableHead>Status do Pedido</TableHead>
-              {isAdmin && <TableHead>Ações</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="text-xs font-medium">
-                  {order.id.slice(0, 8)}
-                </TableCell>
-                {isAdmin && (
+        <div className="rounded-md border dark:border-[#343434]">
+          <Table className="text-xs">
+            <TableHeader className="dark:border-[#343434]">
+              <TableRow>
+                <TableHead>Pedido</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Itens</TableHead>
+                <TableHead>Valor Total</TableHead>
+                <TableHead>Status do Pagamento</TableHead>
+                <TableHead>Status do Pedido</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell className="text-xs font-medium">
+                    {order.id.slice(0, 8)}
+                  </TableCell>
                   <TableCell className="text-xs">
                     <div className="flex flex-col">
                       <span>{order?.customer?.email}</span>
@@ -685,50 +688,50 @@ export default function Orders() {
                       </span>
                     </div>
                   </TableCell>
-                )}
-                <TableCell>
-                  <div className="max-w-[300px]">
-                    {order.items.map((item, index) => (
-                      <div key={item.id} className="text-xs">
-                        {item.quantity}x {item.product.name}
-                        {index < order.items.length - 1 && ', '}
-                      </div>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>{formatCurrency(order.total_amount)}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={cn(
-                      order.payments[0]?.status === 'PAID'
-                        ? 'bg-teal-100 dark:bg-teal-950'
-                        : 'bg-yellow-100 dark:bg-yellow-950',
-                      order.payments[0]?.status === 'PAID'
-                        ? 'text-teal-800 dark:text-teal-400'
-                        : 'text-yellow-800 dark:text-yellow-400',
-                      order.payments[0]?.status === 'PAID'
-                        ? 'hover:bg-teal-200 dark:hover:bg-teal-800'
-                        : 'hover:bg-yellow-200 dark:hover:bg-yellow-800',
-                      'text-xs',
-                    )}
-                  >
-                    {order.payments[0]?.status === 'PAID' ? 'PAGO' : 'PENDENTE'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={`flex items-center gap-2 ${orderStatusMap[order.status].orderBgColor} w-fit`}
-                  >
-                    <StatusDot color={orderStatusMap[order.status].color} />
-                    <span className="text-xs font-medium">
-                      {orderStatusMap[order.status].label}
-                    </span>
-                  </Badge>
-                </TableCell>
-                {isAdmin && (
+                  <TableCell>
+                    <div className="max-w-[300px]">
+                      {order.items.map((item, index) => (
+                        <div key={item.id} className="text-xs">
+                          {item.quantity}x {item.product.name}
+                          {index < order.items.length - 1 && ', '}
+                        </div>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatCurrency(order.total_amount)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={cn(
+                        order.payments[0]?.status === 'PAID'
+                          ? 'bg-teal-100 dark:bg-teal-950'
+                          : 'bg-yellow-100 dark:bg-yellow-950',
+                        order.payments[0]?.status === 'PAID'
+                          ? 'text-teal-800 dark:text-teal-400'
+                          : 'text-yellow-800 dark:text-yellow-400',
+                        order.payments[0]?.status === 'PAID'
+                          ? 'hover:bg-teal-200 dark:hover:bg-teal-800'
+                          : 'hover:bg-yellow-200 dark:hover:bg-yellow-800',
+                        'text-xs',
+                      )}
+                    >
+                      {order.payments[0]?.status === 'PAID'
+                        ? 'PAGO'
+                        : 'PENDENTE'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={`flex items-center gap-2 ${orderStatusMap[order.status].orderBgColor} w-fit`}
+                    >
+                      <StatusDot color={orderStatusMap[order.status].color} />
+                      <span className="text-xs font-medium">
+                        {orderStatusMap[order.status].label}
+                      </span>
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <select
-                      className="rounded border p-1 text-sm disabled:opacity-50"
+                      className="rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
                       value={order.status}
                       onChange={(e) =>
                         handleStatusUpdate(
@@ -746,11 +749,62 @@ export default function Orders() {
                       ))}
                     </select>
                   </TableCell>
-                )}
-              </TableRow>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    )
+  }
+
+  // Se for cliente, mostra os cards
+  return (
+    <div className="container mx-auto py-8">
+      <h1 className="mb-6 text-2xl font-bold">Meus Pedidos</h1>
+
+      <div className="mb-6 flex flex-wrap gap-4">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+            <SelectValue placeholder="Status do Pedido" />
+          </SelectTrigger>
+          <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+            <SelectItem value="all">Todos os Status</SelectItem>
+            {ALLOWED_STATUS_OPTIONS.map((status) => (
+              <SelectItem key={status} value={status}>
+                {orderStatusMap[status].label}
+              </SelectItem>
             ))}
-          </TableBody>
-        </Table>
+          </SelectContent>
+        </Select>
+
+        <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+          <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+            <SelectValue placeholder="Status do Pagamento" />
+          </SelectTrigger>
+          <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+            <SelectItem value="all">Todos os Pagamentos</SelectItem>
+            <SelectItem value="PAID">Pago</SelectItem>
+            <SelectItem value="PENDING">Pendente</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-full dark:border-[#343434] lg:w-[180px]">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent className="dark:border-[#343434] dark:bg-[#1c1c1c]">
+            <SelectItem value="all">Todo Período</SelectItem>
+            <SelectItem value="7days">Últimos 7 dias</SelectItem>
+            <SelectItem value="30days">Últimos 30 dias</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredOrders.map((order) => (
+          <OrderCard key={order.id} order={order} />
+        ))}
       </div>
     </div>
   )

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies })
     const body = await request.json()
-    const { items, totalAmount, storeId } = body
+    const { items, totalAmount, storeId, couponId } = body
 
     const {
       data: { user },
@@ -34,14 +34,31 @@ export async function POST(request: Request) {
       )
     }
 
+    let discountAmount = 0
+    if (couponId) {
+      const { data: coupon } = await supabase
+        .from('coupons')
+        .select('discount')
+        .eq('id', couponId)
+        .single()
+
+      if (coupon) {
+        discountAmount = (totalAmount * coupon.discount) / 100
+      }
+    }
+
+    const finalAmount = totalAmount - discountAmount
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        total_amount: totalAmount,
+        total_amount: finalAmount,
         status: 'pending',
         store_id: storeId,
         user_id: user.id,
         admin_id: store.admin_id,
+        coupon_id: couponId,
+        discount_amount: discountAmount,
       })
       .select('id')
       .single()

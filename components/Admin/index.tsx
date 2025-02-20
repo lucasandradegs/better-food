@@ -22,12 +22,82 @@ export default function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [storeName, setStoreName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [, setStoreId] = useState<string | null>(null)
+  const [dashboardStats, setDashboardStats] = useState({
+    todaySales: 0,
+    todayOrders: 0,
+    averageTicket: 0,
+    previousDaySales: 0,
+    previousDayOrders: 0,
+    previousDayTicket: 0,
+    totalOrders: 0,
+  })
   const [productCategories, setProductCategories] = useState<ProductCategory[]>(
     [],
   )
 
   const supabase = createClientComponentClient<Database>()
   const { userProfile } = useAuth()
+
+  // Função para buscar dados do dashboard
+  const fetchDashboardData = async (storeId: string) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    // Buscar pedidos de hoje
+    const { data: todayOrdersData } = await supabase
+      .from('orders')
+      .select('id, total_amount, created_at')
+      .eq('store_id', storeId)
+      .eq('status', 'paid')
+      .gte('created_at', today.toISOString())
+
+    // Buscar pedidos de ontem
+    const { data: yesterdayOrdersData } = await supabase
+      .from('orders')
+      .select('id, total_amount, created_at')
+      .eq('store_id', storeId)
+      .eq('status', 'paid')
+      .gte('created_at', yesterday.toISOString())
+      .lt('created_at', today.toISOString())
+
+    // Buscar total de pedidos
+    const { data: storeData } = await supabase
+      .from('stores')
+      .select('order_count')
+      .eq('id', storeId)
+      .single()
+
+    const todayOrders = todayOrdersData || []
+    const yesterdayOrders = yesterdayOrdersData || []
+
+    const todaySales = todayOrders.reduce(
+      (sum, order) => sum + (order.total_amount || 0),
+      0,
+    )
+    const previousDaySales = yesterdayOrders.reduce(
+      (sum, order) => sum + (order.total_amount || 0),
+      0,
+    )
+
+    const averageTicket =
+      todayOrders.length > 0 ? todaySales / todayOrders.length : 0
+    const previousDayTicket =
+      yesterdayOrders.length > 0 ? previousDaySales / yesterdayOrders.length : 0
+
+    setDashboardStats({
+      todaySales,
+      todayOrders: todayOrders.length,
+      averageTicket,
+      previousDaySales,
+      previousDayOrders: yesterdayOrders.length,
+      previousDayTicket,
+      totalOrders: storeData?.order_count || 0,
+    })
+  }
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -44,6 +114,46 @@ export default function AdminDashboard() {
       if (!store) return
 
       setStoreName(store.name)
+      setStoreId(store.id)
+
+      // Buscar dados do dashboard
+      await fetchDashboardData(store.id)
+
+      // Inscrever para atualizações em tempo real dos pedidos
+      const ordersChannel = supabase
+        .channel('orders_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: `store_id=eq.${store.id}`,
+          },
+          () => {
+            // Atualizar dados do dashboard quando houver mudanças nos pedidos
+            fetchDashboardData(store.id)
+          },
+        )
+        .subscribe()
+
+      // Inscrever para atualizações em tempo real da loja
+      const storesChannel = supabase
+        .channel('stores_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'stores',
+            filter: `id=eq.${store.id}`,
+          },
+          () => {
+            // Atualizar dados do dashboard quando houver mudanças na loja
+            fetchDashboardData(store.id)
+          },
+        )
+        .subscribe()
 
       const { data, error } = await supabase
         .from('products')
@@ -128,6 +238,8 @@ export default function AdminDashboard() {
         .subscribe()
 
       return () => {
+        ordersChannel.unsubscribe()
+        storesChannel.unsubscribe()
         channel.unsubscribe()
       }
     }
@@ -179,7 +291,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <DashboardStats />
+        <DashboardStats {...dashboardStats} />
         <ProductList
           products={products}
           productCategories={productCategories}
