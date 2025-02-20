@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/database.types'
 
@@ -21,10 +22,10 @@ export async function POST(request: Request) {
       return new Response('Nenhuma atualização necessária', { status: 200 })
     }
 
-    // Buscar o pagamento pelo ID do PagBank
+    // Iniciar transação
     const { data: payment, error: paymentCheckError } = await supabase
       .from('payments')
-      .select('id, order_id, payment_method')
+      .select('id, order_id, payment_method, status')
       .eq('pagbank_id', pagbankId)
       .single()
 
@@ -33,31 +34,37 @@ export async function POST(request: Request) {
       return new Response('Pagamento não encontrado', { status: 404 })
     }
 
-    // Atualizar o status do pagamento
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .update({
-        status: 'PAID' as PaymentStatus,
-        updated_at: new Date().toISOString(),
-        response_data: payload,
-      })
-      .eq('id', payment.id)
-
-    if (paymentError) {
-      console.error('Erro ao atualizar pagamento:', paymentError)
-      return new Response('Erro ao atualizar pagamento', { status: 500 })
-    }
-
-    // Buscar o pedido com informações da loja
+    // Buscar o pedido com informações da loja e lock para update
     const { data: order, error: orderFetchError } = await supabase
       .from('orders')
-      .select('id, user_id, store_id, total_amount, coupon_id')
+      .select(
+        'id, user_id, store_id, total_amount, coupon_id, status, is_counted',
+      )
       .eq('id', payment.order_id)
       .single()
 
     if (orderFetchError) {
       console.error('Erro ao buscar pedido:', orderFetchError)
       return new Response('Erro ao buscar pedido', { status: 500 })
+    }
+
+    // Se o pedido já foi contabilizado, apenas atualizamos o status se necessário
+    if (order.is_counted) {
+      console.log('Pedido já foi contabilizado anteriormente:', order.id)
+
+      // Atualizar status do pagamento se necessário
+      if (payment.status !== 'PAID') {
+        await supabase
+          .from('payments')
+          .update({
+            status: 'PAID' as PaymentStatus,
+            updated_at: new Date().toISOString(),
+            response_data: payload,
+          })
+          .eq('id', payment.id)
+      }
+
+      return new Response('Pedido já processado', { status: 200 })
     }
 
     // Buscar informações da loja
@@ -72,53 +79,20 @@ export async function POST(request: Request) {
       return new Response('Erro ao buscar loja', { status: 500 })
     }
 
-    // Atualizar o status do pedido
-    const { error: orderError } = await supabase
-      .from('orders')
-      .update({
-        status: 'paid' as OrderStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', payment.order_id)
+    // Atualizar tudo em uma única transação
+    const { error: transactionError } = await supabase.rpc('process_payment', {
+      p_order_id: order.id,
+      p_payment_id: payment.id,
+      p_store_id: order.store_id,
+      p_payment_data: payload,
+    })
 
-    if (orderError) {
-      console.error('Erro ao atualizar pedido:', orderError)
-      return new Response('Erro ao atualizar pedido', { status: 500 })
+    if (transactionError) {
+      console.error('Erro na transação:', transactionError)
+      return new Response('Erro ao processar pagamento', { status: 500 })
     }
 
-    // Incrementar o contador de pedidos da loja
-    const { error: storeUpdateError } = await supabase.rpc(
-      'increment_orders_count',
-      {
-        store_id_param: order.store_id,
-      },
-    )
-
-    if (storeUpdateError) {
-      console.error(
-        'Erro ao atualizar contador de pedidos da loja:',
-        storeUpdateError,
-      )
-      // Não retornamos erro aqui para não impactar o fluxo principal
-    }
-
-    // Se existe um cupom no pedido, atualiza o contador
-    if (order.coupon_id) {
-      const { data: coupon } = await supabase
-        .from('coupons')
-        .select('amount_used')
-        .eq('id', order.coupon_id)
-        .single()
-
-      if (coupon) {
-        await supabase
-          .from('coupons')
-          .update({ amount_used: (coupon.amount_used || 0) + 1 })
-          .eq('id', order.coupon_id)
-      }
-    }
-
-    // Criar notificação para o cliente
+    // Criar notificações após a transação ser bem sucedida
     if (payment.payment_method === 'PIX') {
       const { error: customerNotificationError } = await supabase
         .from('notifications')
@@ -139,7 +113,6 @@ export async function POST(request: Request) {
         )
       }
 
-      // Criar notificação para o administrador da loja
       const { error: adminNotificationError } = await supabase
         .from('notifications')
         .insert({

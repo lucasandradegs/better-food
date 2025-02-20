@@ -49,9 +49,11 @@ export default function ProfileDetails({
         // Buscar total de pedidos
         const { count: ordersCount } = await supabase
           .from('orders')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'paid')
+          .select('*, payments!inner(*)', { count: 'exact', head: true })
           .eq('user_id', userProfile?.id)
+          .eq('payments.status', 'PAID')
+          .not('status', 'eq', 'cancelled')
+          .not('status', 'eq', 'refunded')
 
         // Buscar média de avaliações
         const { data: ratings } = await supabase
