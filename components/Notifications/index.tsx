@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
 
 type Notification = Database['public']['Tables']['notifications']['Row']
 
@@ -27,6 +28,7 @@ export function NotificationsPopover() {
   )
   const { userProfile } = useAuth()
   const supabase = createClientComponentClient<Database>()
+  const router = useRouter()
 
   useEffect(() => {
     if (!userProfile?.id) return
@@ -42,7 +44,8 @@ export function NotificationsPopover() {
 
       if (data) {
         setNotifications(data)
-        setUnreadCount(data.filter((n) => n.status === 'unread').length)
+        const unviewedCount = data.filter((n) => !n.viewed).length
+        setUnreadCount(unviewedCount)
       }
       setIsLoading(false)
     }
@@ -75,14 +78,6 @@ export function NotificationsPopover() {
                   : notification,
               ),
             )
-            // Atualiza contagem se o status mudou
-            if (payload.old.status !== payload.new.status) {
-              setUnreadCount((count) =>
-                payload.new.status === 'unread'
-                  ? count + 1
-                  : Math.max(0, count - 1),
-              )
-            }
           }
         },
       )
@@ -107,7 +102,6 @@ export function NotificationsPopover() {
             : notification,
         ),
       )
-      setUnreadCount((count) => Math.max(0, count - 1))
     }
   }
 
@@ -126,6 +120,50 @@ export function NotificationsPopover() {
     }
   }
 
+  const markAsViewed = async (notificationId: string) => {
+    const notification = notifications.find((n) => n.id === notificationId)
+    if (!notification) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ viewed: true })
+      .eq('id', notificationId)
+
+    if (!error) {
+      setNotifications((current) =>
+        current.map((n) =>
+          n.id === notificationId ? { ...n, viewed: true } : n,
+        ),
+      )
+
+      // Se a notificação tiver um path, navega para ele
+      if (notification.path) {
+        router.push(notification.path)
+      }
+    }
+  }
+
+  const markAllAsViewed = async () => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ viewed: true })
+      .eq('user_id', userProfile?.id)
+      .eq('viewed', false)
+
+    if (!error) {
+      setNotifications((current) =>
+        current.map((notification) => ({ ...notification, viewed: true })),
+      )
+      setUnreadCount(0)
+    }
+  }
+
+  const handlePopoverOpenChange = (open: boolean) => {
+    if (open) {
+      markAllAsViewed()
+    }
+  }
+
   const filteredNotifications = notifications.filter((notification) => {
     if (activeFilter === 'all') return true
     if (activeFilter === 'unread') return notification.status === 'unread'
@@ -133,7 +171,7 @@ export function NotificationsPopover() {
   })
 
   return (
-    <Popover>
+    <Popover onOpenChange={handlePopoverOpenChange}>
       <PopoverTrigger asChild>
         <div className="relative cursor-pointer">
           <Bell className="h-5 w-5" />
@@ -152,7 +190,7 @@ export function NotificationsPopover() {
         <div className="flex flex-col border-b">
           <div className="flex items-center justify-between rounded-t-sm p-4 dark:bg-[#232323]">
             <h4 className="font-semibold">Notificações</h4>
-            {unreadCount > 0 && (
+            {notifications.some((n) => n.status === 'unread') && (
               <Button
                 variant="ghost"
                 className="h-auto px-2 py-1 text-xs"
@@ -238,7 +276,10 @@ export function NotificationsPopover() {
                     notification.status === 'unread' &&
                       'bg-blue-50 dark:bg-[#262626]',
                   )}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => {
+                    markAsRead(notification.id)
+                    markAsViewed(notification.id)
+                  }}
                   tabIndex={-1}
                 >
                   <div className="flex items-center gap-2 lg:gap-4">

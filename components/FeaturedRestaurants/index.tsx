@@ -83,7 +83,7 @@ export function FeaturedRestaurants() {
 
   return (
     <section className="mb-12">
-      <h2 className="mb-4 text-lg font-semibold dark:text-white">
+      <h2 className="mb-4 text-lg font-bold tracking-tight dark:text-white">
         Restaurantes em Destaque
       </h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

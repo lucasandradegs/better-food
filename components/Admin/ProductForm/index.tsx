@@ -114,6 +114,8 @@ export function ProductForm({
       title: 'Novo produto cadastrado! 🎉',
       description: `O produto "${productName}" foi cadastrado com sucesso em sua loja.`,
       status: 'unread',
+      viewed: false,
+      path: '/dashboard',
     })
 
     if (error) {
@@ -180,6 +182,8 @@ export function ProductForm({
           title: 'Produto atualizado com sucesso! ✏️',
           description: `O produto "${formData.name}" foi atualizado com sucesso.`,
           status: 'unread',
+          viewed: false,
+          path: '/dashboard',
         })
 
         toast({

@@ -46,7 +46,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <main className="space-y-8 p-6">
+        <main className="space-y-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="h-6 w-48 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
@@ -55,17 +55,17 @@ export default function DashboardPage() {
             <div className="h-10 w-32 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, index) => (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {[...Array(5)].map((_, index) => (
               <div
                 key={index}
-                className="rounded-lg border bg-white p-6 dark:border-[#343434] dark:bg-[#262626]"
+                className="rounded-lg border bg-white p-6 dark:border-[#343434] dark:bg-[#262626] lg:h-[132px]"
               >
                 <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div className="h-5 w-24 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
                   <div className="h-4 w-4 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
                 </div>
-                <div className="mt-4">
+                <div className="mt-[5px]">
                   <div className="h-8 w-32 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
                   <div className="mt-2 h-4 w-40 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
                 </div>
@@ -79,10 +79,10 @@ export default function DashboardPage() {
               <div className="h-10 w-32 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
             </div>
             <div className="grid gap-4">
-              {[...Array(6)].map((_, index) => (
+              {[...Array(3)].map((_, index) => (
                 <div
                   key={index}
-                  className="h-8 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]"
+                  className="h-12 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]"
                 />
               ))}
             </div>

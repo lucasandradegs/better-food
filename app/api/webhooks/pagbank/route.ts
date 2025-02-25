@@ -102,6 +102,8 @@ export async function POST(request: Request) {
           description:
             'Seu pagamento via PIX foi aprovado e seu pedido está sendo preparado.',
           status: 'unread',
+          viewed: false,
+          path: '/pedidos',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -120,6 +122,8 @@ export async function POST(request: Request) {
           title: 'Novo pedido recebido! 🛍️',
           description: `Novo pedido no valor de R$ ${Number(order.total_amount).toFixed(2)} foi pago via PIX.`,
           status: 'unread',
+          viewed: false,
+          path: '/pedidos',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })

@@ -115,8 +115,6 @@ export function CartSheet() {
     }
   }
 
-  console.log(items)
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -130,10 +128,10 @@ export function CartSheet() {
         </div>
       </SheetTrigger>
       <SheetContent
-        className="flex w-full flex-col p-0 dark:border-[#343434] dark:bg-[#1c1c1c] sm:max-w-lg"
+        className="flex w-full flex-col gap-0 p-0 dark:border-[#343434] dark:bg-[#1c1c1c] sm:max-w-lg"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <SheetHeader className="space-y-0.5 px-6 pt-4">
+        <SheetHeader className="flex h-12 justify-center space-y-0.5 px-6">
           <SheetTitle className="flex items-center gap-2 text-sm">
             <ShoppingCart className="h-4 w-4" />
             Carrinho

@@ -107,6 +107,8 @@ export function OrderRatingDialog({
         title: 'Avaliação enviada! ⭐',
         description: `Obrigado por avaliar seu pedido em ${storeName}!`,
         status: 'unread',
+        viewed: false,
+        path: `/pedidos`,
       })
 
       toast({

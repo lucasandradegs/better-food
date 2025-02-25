@@ -46,7 +46,6 @@ export default function ProfileDetails({
       try {
         setIsLoading(true)
 
-        // Buscar total de pedidos
         const { count: ordersCount } = await supabase
           .from('orders')
           .select('*, payments!inner(*)', { count: 'exact', head: true })
@@ -55,7 +54,6 @@ export default function ProfileDetails({
           .not('status', 'eq', 'cancelled')
           .not('status', 'eq', 'refunded')
 
-        // Buscar média de avaliações
         const { data: ratings } = await supabase
           .from('order_ratings')
           .select('rating, food_rating, delivery_rating')
@@ -70,13 +68,11 @@ export default function ProfileDetails({
             }, 0) / ratings.length
           : 0
 
-        // Buscar total de lojas favoritas
         const { count: favoritesCount } = await supabase
           .from('favorite_stores')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userProfile?.id)
 
-        // Buscar pedidos recentes
         const { data: orders } = await supabase
           .from('orders')
           .select(
@@ -120,7 +116,7 @@ export default function ProfileDetails({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen py-8">
         <div className="mx-auto max-w-3xl space-y-8">
           <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-[#262626]">
             <div className="relative h-32 animate-pulse bg-gray-200 dark:bg-gray-800" />
@@ -193,7 +189,7 @@ export default function ProfileDetails({
   const progress = (totalOrders / nextLevel) * 100
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8">
       <div className="mx-auto max-w-3xl space-y-8">
         <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-[#262626]">
           <div className="relative h-32 bg-gradient-to-r from-red-500 to-red-800">

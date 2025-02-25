@@ -3,7 +3,7 @@
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/SideBar'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   UserCog,
@@ -15,6 +15,7 @@ import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
 import { Toaster } from '@/components/ui/toaster'
 import { RoleGuard } from '@/components/RoleGuard'
+import MobileNav from '@/components/MobileNav'
 
 export default function AuthLayout({
   children,
@@ -134,10 +135,15 @@ export default function AuthLayout({
           className={cn(
             'grid-in-main',
             'w-full overflow-auto p-4 md:p-8',
-            'bg-[#f8f8f8] dark:bg-[#1c1c1c]',
+            'bg-[#f8f8f8] dark:bg-[#1c1c1c] max-md:pb-20',
           )}
         >
-          <div className="flex flex-col gap-4">{children}</div>
+          <div className="flex flex-col gap-4">
+            {children}
+            <Suspense fallback={null}>
+              <MobileNav />
+            </Suspense>
+          </div>
         </main>
       </div>
       <Toaster />

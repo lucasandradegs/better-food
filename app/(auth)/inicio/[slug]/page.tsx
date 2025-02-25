@@ -129,7 +129,7 @@ export default function StorePage({
   })
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="">
       <div className="mb-8">
         <div className="relative mb-6 h-[300px] w-full overflow-hidden rounded-lg">
           <Image
@@ -143,7 +143,9 @@ export default function StorePage({
 
         <div className="flex flex-col">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-medium">{store.name}</h1>
+            <h1 className="text-xl font-bold tracking-tight dark:text-white">
+              {store.name}
+            </h1>
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-400" />
             </div>
@@ -158,7 +160,7 @@ export default function StorePage({
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-6 text-lg font-semibold">Cardápio</h2>
+        <h2 className="mb-6 text-lg font-bold tracking-tight">Cardápio</h2>
         <CategoryFilter
           categories={categories}
           selectedCategory={selectedCategory}

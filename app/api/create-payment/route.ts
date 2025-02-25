@@ -273,6 +273,8 @@ export async function POST(request: Request) {
           title: 'Pagamento confirmado! 🎉',
           description: 'Seu pedido foi confirmado e está sendo preparado.',
           status: 'unread',
+          viewed: false,
+          path: `/pedidos`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -300,6 +302,8 @@ export async function POST(request: Request) {
             title: 'Novo pedido recebido! 🛍️',
             description: `Novo pedido no valor de R$ ${Number(orderData.total_amount).toFixed(2)} foi pago via cartão de crédito.`,
             status: 'unread',
+            viewed: false,
+            path: `/pedidos`,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
@@ -320,6 +324,8 @@ export async function POST(request: Request) {
           description:
             'Houve um problema com seu pagamento. Por favor, tente novamente.',
           status: 'unread',
+          viewed: false,
+          path: `/pedidos`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })

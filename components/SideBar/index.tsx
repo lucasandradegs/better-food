@@ -2,8 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import React, { useState, createContext, useContext } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { SidebarLink } from './SidebarLink'
 
 interface SidebarContextProps {
@@ -67,7 +66,6 @@ export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
   return (
     <>
       <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<'div'>)} />
     </>
   )
 }
@@ -98,62 +96,6 @@ export const DesktopSidebar = ({
     >
       {children}
     </motion.div>
-  )
-}
-
-export const MobileSidebar = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<'div'>) => {
-  const { open, setOpen } = useSidebar()
-  return (
-    <>
-      <div
-        className={cn(
-          'flex h-10 w-full flex-row items-center justify-between bg-neutral-100 px-4 py-4 dark:bg-neutral-800 md:hidden',
-          'fixed top-12 z-40 w-full',
-          {
-            hidden: className?.includes('hidden'),
-          },
-        )}
-        {...props}
-      >
-        <div className="z-20 flex w-full justify-end">
-          <Menu
-            className="cursor-pointer text-neutral-800 dark:text-neutral-200"
-            onClick={() => setOpen(!open)}
-          />
-        </div>
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ x: '-100%', opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '-100%', opacity: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: 'easeInOut',
-              }}
-              className={cn(
-                'fixed inset-0 z-[100] flex h-full w-full flex-col justify-between bg-[#f5f5f5] p-10 dark:bg-neutral-900',
-                'top-[5.5rem]',
-                className,
-              )}
-            >
-              <div className="flex items-center justify-between border-b pb-4">
-                <span className="text-lg font-medium">Menu</span>
-                <X
-                  className="cursor-pointer text-neutral-800 dark:text-neutral-200"
-                  onClick={() => setOpen(!open)}
-                />
-              </div>
-              {children}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
   )
 }
 

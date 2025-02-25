@@ -146,6 +146,8 @@ export function ProductList({
         title: 'Produto excluído com sucesso! 🗑️',
         description: `O produto "${productToDelete.name}" já não está mais disponível no cardápio.`,
         status: 'unread',
+        viewed: false,
+        path: '/dashboard',
       })
 
       toast({

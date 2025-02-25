@@ -45,7 +45,9 @@ const categories = [
 export function Categories() {
   return (
     <section className="mb-12">
-      <h2 className="mb-4 text-lg font-semibold dark:text-white">Categorias</h2>
+      <h2 className="mb-4 text-lg font-bold tracking-tight dark:text-white">
+        Categorias
+      </h2>
       <div className="hidden gap-4 sm:grid sm:grid-cols-3 md:grid-cols-6">
         {categories.map((category) => (
           <div

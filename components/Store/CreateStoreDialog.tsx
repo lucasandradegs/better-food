@@ -122,6 +122,8 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
       title: 'Loja cadastrada com sucesso! 🎉',
       description: `Sua loja "${storeName}" está pronta para o uso!`,
       status: 'unread',
+      viewed: false,
+      path: '/dashboard',
     })
 
     if (error) {
@@ -209,7 +211,7 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
           Cadastre sua loja
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] w-[85%] overflow-y-auto rounded-lg lg:max-w-[625px] dark:bg-[#262626]">
+      <DialogContent className="max-h-[90vh] w-[85%] overflow-y-auto rounded-lg dark:bg-[#262626] lg:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>Cadastrar Nova Loja</DialogTitle>
           <DialogDescription>

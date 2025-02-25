@@ -19,7 +19,11 @@ export function CategoryFilter({
           <Button
             key="todos"
             variant={selectedCategory === 'Todos' ? 'default' : 'outline'}
-            className="flex-shrink-0 dark:border dark:border-[#343434] dark:bg-[#232323] dark:hover:bg-[#363636]"
+            className={`flex-shrink-0 dark:border dark:border-[#343434] ${
+              selectedCategory === 'Todos'
+                ? 'dark:bg-red-600 dark:text-white dark:hover:bg-red-700'
+                : 'dark:bg-[#232323] dark:hover:bg-[#363636]'
+            }`}
             onClick={() => onCategoryChange('Todos')}
           >
             Todos
@@ -28,7 +32,11 @@ export function CategoryFilter({
             <Button
               key={category}
               variant={selectedCategory === category ? 'default' : 'outline'}
-              className="flex-shrink-0 dark:border dark:border-[#343434] dark:bg-[#232323] dark:hover:bg-[#363636]"
+              className={`flex-shrink-0 dark:border dark:border-[#343434] ${
+                selectedCategory === category
+                  ? 'dark:bg-red-600 dark:text-white dark:hover:bg-red-700'
+                  : 'dark:bg-[#232323] dark:hover:bg-[#363636]'
+              }`}
               onClick={() => onCategoryChange(category)}
             >
               {category}

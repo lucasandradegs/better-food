@@ -16,6 +16,8 @@ export interface Database {
           title: string
           description: string
           status: 'read' | 'unread'
+          viewed: boolean
+          path: string | null
           created_at: string
           updated_at: string
         }
@@ -25,6 +27,8 @@ export interface Database {
           title: string
           description: string
           status?: 'read' | 'unread'
+          viewed?: boolean
+          path?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -34,6 +38,8 @@ export interface Database {
           title?: string
           description?: string
           status?: 'read' | 'unread'
+          viewed?: boolean
+          path?: string | null
           created_at?: string
           updated_at?: string
         }

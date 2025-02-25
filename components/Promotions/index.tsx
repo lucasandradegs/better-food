@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge'
 export function Promotions() {
   return (
     <section>
-      <h2 className="mb-4 text-lg font-semibold dark:text-white">Promoções</h2>
+      <h2 className="mb-4 text-lg font-bold tracking-tight dark:text-white">
+        Promoções
+      </h2>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
           <CardContent className="p-6">

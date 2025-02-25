@@ -31,6 +31,7 @@ export default function AdminDashboard() {
     previousDayOrders: 0,
     previousDayTicket: 0,
     totalOrders: 0,
+    totalSales: 0,
   })
   const [productCategories, setProductCategories] = useState<ProductCategory[]>(
     [],
@@ -41,28 +42,72 @@ export default function AdminDashboard() {
 
   // Função para buscar dados do dashboard
   const fetchDashboardData = async (storeId: string) => {
-    const today = new Date()
+    // Obtém a data local e ajusta para o início do dia em UTC
+    const now = new Date()
+    const today = new Date(now)
     today.setHours(0, 0, 0, 0)
+    // Ajusta para UTC considerando o offset local
+    const todayUTC = new Date(
+      today.getTime() - today.getTimezoneOffset() * 60000,
+    )
 
-    const yesterday = new Date(today)
+    const yesterday = new Date(todayUTC)
     yesterday.setDate(yesterday.getDate() - 1)
+
+    const tomorrow = new Date(todayUTC)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    console.log('Períodos de busca:', {
+      hoje: {
+        inicio: todayUTC.toISOString(),
+        fim: tomorrow.toISOString(),
+      },
+      ontem: {
+        inicio: yesterday.toISOString(),
+        fim: todayUTC.toISOString(),
+      },
+    })
 
     // Buscar pedidos de hoje
     const { data: todayOrdersData } = await supabase
       .from('orders')
-      .select('id, total_amount, created_at')
+      .select(
+        `
+        id, 
+        total_amount,
+        created_at,
+        payments!inner (
+          status
+        )
+      `,
+      )
       .eq('store_id', storeId)
-      .eq('status', 'paid')
-      .gte('created_at', today.toISOString())
+      .eq('payments.status', 'PAID')
+      .gte('created_at', todayUTC.toISOString())
+      .lt('created_at', tomorrow.toISOString())
 
     // Buscar pedidos de ontem
     const { data: yesterdayOrdersData } = await supabase
       .from('orders')
-      .select('id, total_amount, created_at')
+      .select(
+        `
+        id, 
+        total_amount,
+        created_at,
+        payments!inner (
+          status
+        )
+      `,
+      )
       .eq('store_id', storeId)
-      .eq('status', 'paid')
+      .eq('payments.status', 'PAID')
       .gte('created_at', yesterday.toISOString())
-      .lt('created_at', today.toISOString())
+      .lt('created_at', todayUTC.toISOString())
+
+    console.log('Pedidos encontrados:', {
+      hoje: todayOrdersData,
+      ontem: yesterdayOrdersData,
+    })
 
     // Buscar total de pedidos
     const { data: storeData } = await supabase
@@ -71,15 +116,34 @@ export default function AdminDashboard() {
       .eq('id', storeId)
       .single()
 
+    // Buscar total de vendas
+    const { data: allOrders } = await supabase
+      .from('orders')
+      .select(
+        `
+        total_amount,
+        payments!inner (
+          status
+        )
+      `,
+      )
+      .eq('store_id', storeId)
+      .eq('payments.status', 'PAID')
+
     const todayOrders = todayOrdersData || []
     const yesterdayOrders = yesterdayOrdersData || []
 
     const todaySales = todayOrders.reduce(
-      (sum, order) => sum + (order.total_amount || 0),
+      (sum, order) => sum + Number(order.total_amount || 0),
       0,
     )
     const previousDaySales = yesterdayOrders.reduce(
-      (sum, order) => sum + (order.total_amount || 0),
+      (sum, order) => sum + Number(order.total_amount || 0),
+      0,
+    )
+
+    const totalSales = (allOrders || []).reduce(
+      (sum, order) => sum + Number(order.total_amount || 0),
       0,
     )
 
@@ -87,6 +151,17 @@ export default function AdminDashboard() {
       todayOrders.length > 0 ? todaySales / todayOrders.length : 0
     const previousDayTicket =
       yesterdayOrders.length > 0 ? previousDaySales / yesterdayOrders.length : 0
+
+    console.log('Cálculos finais:', {
+      todaySales,
+      todayOrders: todayOrders.length,
+      averageTicket,
+      previousDaySales,
+      previousDayOrders: yesterdayOrders.length,
+      previousDayTicket,
+      totalOrders: storeData?.order_count || 0,
+      totalSales,
+    })
 
     setDashboardStats({
       todaySales,
@@ -96,6 +171,7 @@ export default function AdminDashboard() {
       previousDayOrders: yesterdayOrders.length,
       previousDayTicket,
       totalOrders: storeData?.order_count || 0,
+      totalSales,
     })
   }
 
@@ -270,12 +346,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="space-y-8 p-6">
+    <div className="">
+      <main className="space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {isLoading ? (
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-6 w-32" />
             ) : (
               <h1 className="text-lg font-bold tracking-tight dark:text-white">
                 {storeName} - Dashboard

@@ -132,6 +132,7 @@ const orderStatusMap: Record<
 // Opções de status permitidas para atualização
 const ALLOWED_STATUS_OPTIONS: Database['public']['Enums']['order_status'][] = [
   'paid',
+  'pending',
   'preparing',
   'ready',
   'delivered',
@@ -582,6 +583,8 @@ export default function Orders() {
           title: 'Status do pedido atualizado',
           description: `Seu pedido agora está ${orderStatusMap[newStatus].label.toLowerCase()}.`,
           status: 'unread',
+          viewed: false,
+          path: `/pedidos`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -603,11 +606,9 @@ export default function Orders() {
     }
   }
 
-  console.log(orders)
-
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="">
         <Skeleton className="mb-6 h-10 w-1/4" />
         <div className="space-y-4">
           <Skeleton className="mb-4 h-8 w-full" />
@@ -617,11 +618,12 @@ export default function Orders() {
     )
   }
 
-  // Se for admin, mostra a tabela
   if (isAdmin) {
     return (
-      <div className="container mx-auto py-8">
-        <h1 className="mb-6 text-2xl font-bold">Gerenciar Pedidos</h1>
+      <div className="">
+        <h1 className="mb-6 text-lg font-bold tracking-tight dark:text-white">
+          Gerenciar Pedidos
+        </h1>
 
         <div className="mb-6 flex flex-wrap gap-4">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
