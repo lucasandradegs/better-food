@@ -140,7 +140,7 @@ export function CreditCardForm() {
 
       if (!response.ok) {
         setPaymentStatus('error')
-        setPaymentMessage(responseData.error || 'Falha ao processar pagamento')
+        throw responseData
       }
 
       if (responseData.paymentStatus === 'PAID') {
@@ -148,11 +148,9 @@ export function CreditCardForm() {
         setPaymentMessage('Pagamento realizado com sucesso!')
       } else if (responseData.paymentStatus === 'DECLINED') {
         setPaymentStatus('error')
-        setPaymentMessage(responseData.paymentMessage || 'Pagamento recusado')
-        throw new Error(responseData.paymentMessage || 'Pagamento recusado')
+        throw responseData
       } else {
         setPaymentStatus('error')
-        setPaymentMessage('Erro no processamento do pagamento')
         throw new Error('Erro no processamento do pagamento')
       }
 
@@ -222,7 +220,7 @@ export function CreditCardForm() {
                   <Input
                     placeholder="Lucas Andrade"
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                   />
                 </FormControl>
                 <FormMessage />
@@ -241,7 +239,7 @@ export function CreditCardForm() {
                     placeholder="exemplo@email.com"
                     type="email"
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                   />
                 </FormControl>
                 <FormMessage />
@@ -261,7 +259,7 @@ export function CreditCardForm() {
                     placeholder="000.000.000-00"
                     onAccept={(value) => field.onChange(value)}
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                   />
                 </FormControl>
                 <FormMessage />
@@ -282,7 +280,7 @@ export function CreditCardForm() {
                       placeholder="11"
                       onAccept={(value) => field.onChange(value)}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -301,7 +299,7 @@ export function CreditCardForm() {
                       placeholder="99999-9999"
                       onAccept={(value) => field.onChange(value)}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -325,7 +323,7 @@ export function CreditCardForm() {
                       form.trigger('cardNumber')
                     }}
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                   />
                 </FormControl>
                 <FormMessage />
@@ -349,7 +347,7 @@ export function CreditCardForm() {
                         form.trigger('expiryDate')
                       }}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -371,7 +369,7 @@ export function CreditCardForm() {
                         form.trigger('cvv')
                       }}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />

@@ -285,7 +285,7 @@ export default function ProfileDetails({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Badge>Nível {userLevel}</Badge>
+                  <Badge>{userLevel}</Badge>
                   <span className="text-sm text-muted-foreground dark:text-gray-300">
                     {totalOrders}/{nextLevel} pedidos para o próximo nível
                   </span>
@@ -326,7 +326,14 @@ export default function ProfileDetails({
                     </p>
                     <div className="mt-1 flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {order.status}
+                        {order.status === 'paid' && 'Pago'}
+                        {order.status === 'pending' && 'Pendente'}
+                        {order.status === 'preparing' && 'Preparando'}
+                        {order.status === 'ready' && 'Pronto'}
+                        {order.status === 'delivering' && 'Entregando'}
+                        {order.status === 'delivered' && 'Entregue'}
+                        {order.status === 'cancelled' && 'Cancelado'}
+                        {order.status === 'refunded' && 'Estornado'}
                       </Badge>
                       <span className="text-xs font-medium text-green-600 dark:text-green-400">
                         R$ {order.total_amount.toFixed(2)}

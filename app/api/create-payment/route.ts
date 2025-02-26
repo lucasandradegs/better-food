@@ -111,6 +111,28 @@ export async function POST(request: Request) {
       responseData.charges[0]?.payment_response?.message || ''
     console.log('Status do pagamento:', { paymentStatus, paymentMessage })
 
+    // Se o pagamento foi recusado, retornar erro 400
+    if (paymentStatus === 'DECLINED') {
+      const errorCode = responseData.charges[0]?.payment_response?.code
+      const errorMessage = responseData.charges[0]?.payment_response?.message
+      return NextResponse.json(
+        {
+          error: 'Falha ao processar pagamento',
+          details: {
+            error_messages: [
+              {
+                code: errorCode || '10002',
+                description:
+                  errorMessage || 'Pagamento recusado pelo emissor do cartão',
+                parameter_name: 'payment',
+              },
+            ],
+          },
+        },
+        { status: 400 },
+      )
+    }
+
     // Mapear o status do PagBank para nosso enum
     let dbPaymentStatus:
       | 'AUTHORIZED'

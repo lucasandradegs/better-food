@@ -264,7 +264,7 @@ export function ProductForm({
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Ex: X-Burger Especial"
-                className="text-sm dark:bg-[#161616]"
+                className="text-base dark:bg-[#161616] lg:text-sm"
               />
             </div>
             <div className="grid gap-2">
@@ -277,7 +277,7 @@ export function ProductForm({
                 placeholder="Ex: 29.90"
                 type="number"
                 step="0.01"
-                className="text-sm dark:bg-[#161616]"
+                className="text-base dark:bg-[#161616] lg:text-sm"
               />
             </div>
           </div>
@@ -289,7 +289,7 @@ export function ProductForm({
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Descreva os ingredientes e características do produto"
-              className="min-h-[80px] text-sm dark:bg-[#161616]"
+              className="min-h-[80px] text-base dark:bg-[#161616] lg:text-sm"
             />
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -304,7 +304,7 @@ export function ProductForm({
                   })
                 }
               >
-                <SelectTrigger className="text-sm dark:bg-[#161616]">
+                <SelectTrigger className="text-base dark:bg-[#161616] lg:text-sm">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-[#161616]">
@@ -340,7 +340,7 @@ export function ProductForm({
               <Input
                 id="picture"
                 type="file"
-                className="text-sm dark:bg-[#161616]"
+                className="text-base dark:bg-[#161616] lg:text-sm"
                 accept="image/*"
                 onChange={handleImageChange}
               />
@@ -370,7 +370,7 @@ export function ProductForm({
             </Button>
             <Button
               type="submit"
-              className="relative w-[140px] sm:w-[140px]"
+              className="relative mx-auto w-full sm:w-[140px]"
               disabled={isLoading}
             >
               <div className={`${isLoading ? 'invisible' : ''}`}>

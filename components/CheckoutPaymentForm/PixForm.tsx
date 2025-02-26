@@ -108,8 +108,7 @@ export function PixForm() {
 
       if (!response.ok) {
         setPaymentStatus('error')
-        setPaymentMessage(responseData.error || 'Falha ao processar pagamento')
-        throw new Error(responseData.error || 'Falha ao processar pagamento')
+        throw responseData
       }
 
       setPaymentStatus('success')
@@ -180,7 +179,7 @@ export function PixForm() {
                   <Input
                     placeholder="Lucas Andrade"
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                     onChange={(e) => {
                       field.onChange(e)
                       form.trigger('name')
@@ -203,7 +202,7 @@ export function PixForm() {
                     placeholder="exemplo@email.com"
                     type="email"
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                     onChange={(e) => {
                       field.onChange(e)
                       form.trigger('email')
@@ -230,7 +229,7 @@ export function PixForm() {
                       form.trigger('cpf')
                     }}
                     {...field}
-                    className="text-sm"
+                    className="text-base lg:text-sm"
                   />
                 </FormControl>
                 <FormMessage />
@@ -254,7 +253,7 @@ export function PixForm() {
                         form.trigger('ddd')
                       }}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -276,7 +275,7 @@ export function PixForm() {
                         form.trigger('phone')
                       }}
                       {...field}
-                      className="text-sm"
+                      className="text-base lg:text-sm"
                     />
                   </FormControl>
                   <FormMessage />

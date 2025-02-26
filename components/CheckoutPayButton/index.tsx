@@ -22,6 +22,31 @@ interface QRCodeLink {
   type: string
 }
 
+interface ErrorResponse {
+  error: string
+  details: {
+    error_messages: Array<{
+      code: string
+      description: string
+      parameter_name: string
+    }>
+  }
+}
+
+interface ErrorMessages {
+  [key: string]:
+    | {
+        [key: string]: {
+          title: string
+          message: string
+        }
+      }
+    | {
+        title: string
+        message: string
+      }
+}
+
 export default function CheckoutPayButton() {
   const {
     paymentMethod,
@@ -53,6 +78,7 @@ export default function CheckoutPayButton() {
     }
     return null
   })
+  const [error, setError] = useState<ErrorResponse | null>(null)
   const isMobile = useMediaQuery('(max-width: 360px)')
 
   const creditCardPayment = paymentMethod === 'CREDIT_CARD'
@@ -66,6 +92,7 @@ export default function CheckoutPayButton() {
     try {
       setIsDialogOpen(true)
       setPaymentStatus('processing')
+      setError(null)
 
       if (submitForm) {
         const result = await submitForm()
@@ -109,6 +136,9 @@ export default function CheckoutPayButton() {
     } catch (error) {
       console.error('Erro no pagamento:', error)
       setPaymentStatus('error')
+      if (error && typeof error === 'object' && 'error' in error) {
+        setError(error as ErrorResponse)
+      }
     }
   }
 
@@ -128,6 +158,36 @@ export default function CheckoutPayButton() {
   }
 
   const getDialogContent = () => {
+    const errorMessages: ErrorMessages = {
+      '40002': {
+        'customer.tax_id': {
+          title: 'CPF Inválido 😓',
+          message:
+            'Por favor, verifique se o CPF foi digitado corretamente e tente novamente.',
+        },
+      },
+      '40401': {
+        title: 'Cartão Recusado 😓',
+        message:
+          'O pagamento foi recusado pelo banco emissor do cartão. Por favor, tente outro cartão ou método de pagamento.',
+      },
+      '40400': {
+        title: 'Cartão Inválido 😓',
+        message:
+          'Os dados do cartão são inválidos. Por favor, verifique os dados e tente novamente.',
+      },
+      '40303': {
+        title: 'Saldo Insuficiente 😓',
+        message:
+          'O cartão não possui saldo suficiente para realizar a compra. Por favor, tente outro cartão ou método de pagamento.',
+      },
+      '10002': {
+        title: 'Pagamento não autorizado 😓',
+        message:
+          'O pagamento foi recusado pelo emissor do cartão. Por favor, tente outro cartão ou método de pagamento.',
+      },
+    }
+
     if (!paymentStatus) {
       return {
         title: '',
@@ -158,12 +218,34 @@ export default function CheckoutPayButton() {
             ? 'Escaneie o QR Code ou copie o código para realizar o pagamento.'
             : 'Seu pedido foi confirmado e está sendo preparado.',
         }
-      case 'error':
-        return {
-          title: 'Ops! Pagamento não autorizado 😓',
+      case 'error': {
+        const defaultError = {
+          title: 'Ops! Algo deu errado 😓',
           message:
             'Não foi possível processar seu pagamento. Por favor, tente novamente.',
         }
+
+        if (error?.details?.error_messages?.[0]) {
+          const errorData = error.details.error_messages[0]
+          const errorCode = errorData.code
+          const parameterName = errorData.parameter_name
+
+          if (errorCode === '40002' && parameterName) {
+            const taxIdError = errorMessages['40002'] as {
+              [key: string]: { title: string; message: string }
+            }
+            return taxIdError[parameterName] || defaultError
+          }
+
+          const genericError = errorMessages[errorCode] as {
+            title: string
+            message: string
+          }
+          return genericError || defaultError
+        }
+
+        return defaultError
+      }
       default:
         return {
           title: '',

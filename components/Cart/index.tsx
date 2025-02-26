@@ -254,7 +254,7 @@ export function CartSheet() {
                           onChange={(e) =>
                             setCouponCode(e.target.value.toUpperCase())
                           }
-                          className="pr-24 text-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="pr-24 text-base focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 lg:text-sm"
                         />
                         <Button
                           size="sm"
