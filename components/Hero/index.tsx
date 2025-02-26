@@ -8,7 +8,7 @@ export function HeroSection() {
   return (
     <div className="container relative z-10 mx-auto flex max-w-screen-2xl flex-col items-center justify-center space-y-8 px-4 py-12 lg:px-12 lg:py-20">
       <TilesBackground />
-      <div className="bg-muted z-10 inline-flex items-center rounded-2xl border border-slate-200 px-3 py-1 text-center text-sm font-medium">
+      <div className="z-10 inline-flex items-center rounded-2xl border border-slate-200 bg-muted px-3 py-1 text-center text-sm font-medium">
         🍔 Transforme seu negócio e aumente suas vendas
       </div>
       <div className="z-10 space-y-4 text-center">
@@ -19,7 +19,7 @@ export function HeroSection() {
           </span>
           <span className="text-red-600">BetterFood</span>
         </h1>
-        <p className="text-muted-foreground mx-auto max-w-[700px] text-sm md:text-xl">
+        <p className="mx-auto max-w-[700px] text-sm text-muted-foreground md:text-xl">
           Simplifique a gestão do seu restaurante com o BetterFood. Controle
           pedidos, estoque e financeiro de forma eficiente.
         </p>
@@ -45,8 +45,8 @@ export function HeroSection() {
         <div className="relative rounded-lg border bg-background shadow-2xl">
           <div className="overflow-hidden rounded-lg">
             <Image
-              src="/imagemHero.png"
-              alt="StreamSim Dashboard Preview"
+              src="/heroSection.png"
+              alt="BetterFood Dashboard Preview"
               width={1280}
               height={720}
               className="w-full"
@@ -60,11 +60,11 @@ export function HeroSection() {
         </div>
       </div>
       <div className="z-10 flex flex-col items-center justify-center gap-8 py-8 lg:flex-row">
-        <div className="text-muted-foreground flex items-center gap-2">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <ChartLine className="h-5 w-5" />
           <span className="text-sm">Dashboard financeiro</span>
         </div>
-        <div className="text-muted-foreground flex items-center gap-2">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Award className="h-5 w-5" />
           <span className="text-sm">Menor taxa do mercado</span>
         </div>

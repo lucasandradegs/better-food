@@ -31,17 +31,25 @@ export function DashboardStats({
 }: DashboardStatsProps) {
   // Calcula as variações percentuais
   const salesChange =
-    previousDaySales > 0
-      ? ((todaySales - previousDaySales) / previousDaySales) * 100
-      : 0
+    previousDaySales === 0 && todaySales > 0
+      ? 100
+      : previousDaySales > 0
+        ? ((todaySales - previousDaySales) / previousDaySales) * 100
+        : 0
   const ordersChange =
-    previousDayOrders > 0
-      ? ((todayOrders - previousDayOrders) / previousDayOrders) * 100
-      : 0
+    previousDayOrders === 0 && todayOrders > 0
+      ? 100
+      : previousDayOrders > 0
+        ? ((todayOrders - previousDayOrders) / previousDayOrders) * 100
+        : 0
   const ticketChange =
-    previousDayTicket > 0
-      ? ((averageTicket - previousDayTicket) / previousDayTicket) * 100
-      : 0
+    previousDayTicket === 0 && averageTicket > 0
+      ? 100
+      : previousDayTicket > 0
+        ? ((averageTicket - previousDayTicket) / previousDayTicket) * 100
+        : 0
+
+  console.log(salesChange)
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
