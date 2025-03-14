@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "include": [
+    "app/**/*.{ts,tsx,js,jsx}",
+    "components/**/*.{ts,tsx,js,jsx}",
+    "contexts/**/*.{ts,tsx,js,jsx}",
+    "hooks/**/*.{ts,tsx,js,jsx}",
+    "lib/**/*.{ts,tsx,js,jsx}",
+    "services/**/*.{ts,tsx,js,jsx}",
+    "supabase/**/*.{ts,tsx,js,jsx}",
+    "utils/**/*.{ts,tsx,js,jsx}",
+    "migrations/**/*.{ts,tsx,js,jsx,sql}",
+    "*.{ts,tsx,js,jsx,json}"
+  ],
+  "exclude": [
+    "node_modules/**",
+    ".next/**",
+    ".vercel/**",
+    "**/*.test.{ts,tsx,js,jsx}",
+    "**/*.spec.{ts,tsx,js,jsx}"
+  ],
+  "embeddings": {
+    "provider": "cursor",
+    "dimensions": 1536
+  },
+  "chunkSize": 1000,
+  "chunkOverlap": 200
+} 

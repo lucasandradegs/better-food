@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "description": "Configuração do Supabase para o projeto Better Food",
+  "tables": [
+    {
+      "name": "users",
+      "description": "Tabela de usuários do sistema",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "description": "ID único do usuário"
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "description": "Email do usuário"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "description": "Data de criação do usuário"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "description": "Data de atualização do usuário"
+        }
+      ]
+    },
+    {
+      "name": "profiles",
+      "description": "Perfis de usuários com informações adicionais",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "description": "ID único do perfil, referência ao usuário"
+        },
+        {
+          "name": "full_name",
+          "type": "text",
+          "description": "Nome completo do usuário"
+        },
+        {
+          "name": "avatar_url",
+          "type": "text",
+          "description": "URL da imagem de avatar do usuário"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "description": "Data de criação do perfil"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "description": "Data de atualização do perfil"
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "enabled": true,
+    "providers": ["email", "google", "github"],
+    "redirects": {
+      "login": "/",
+      "logout": "/"
+    }
+  },
+  "storage": {
+    "buckets": [
+      {
+        "name": "avatars",
+        "description": "Armazenamento de imagens de avatar dos usuários"
+      },
+      {
+        "name": "public",
+        "description": "Armazenamento de arquivos públicos"
+      }
+    ]
+  },
+  "functions": [
+    {
+      "name": "handle_new_user",
+      "description": "Função para processar novos usuários após o registro"
+    }
+  ]
+} 

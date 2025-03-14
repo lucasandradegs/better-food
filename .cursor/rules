@@ -1,0 +1,62 @@
+# Regras de Contexto para Projeto NextJS + Supabase
+
+## Estrutura do Projeto
+- `/app`: Contém as rotas e páginas da aplicação (App Router do Next.js)
+- `/components`: Componentes React reutilizáveis
+- `/contexts`: Contextos React para gerenciamento de estado global
+- `/hooks`: Custom hooks React
+- `/lib`: Bibliotecas e configurações
+- `/public`: Arquivos estáticos
+- `/services`: Serviços para comunicação com APIs externas
+- `/supabase`: Configurações e tipos do Supabase
+- `/utils`: Funções utilitárias
+- `/migrations`: Scripts de migração de banco de dados
+
+## Padrões de Código
+- Utilizar TypeScript para tipagem estática
+- Seguir os princípios de componentes funcionais e hooks do React
+- Utilizar o padrão de composição de componentes
+- Implementar Server Components e Client Components conforme necessário
+- Utilizar o padrão de layout do Next.js para estruturas comuns
+
+## Supabase
+- Utilizar o cliente Supabase para autenticação e acesso ao banco de dados
+- Implementar Row Level Security (RLS) para segurança dos dados
+- Utilizar migrations para controle de versão do banco de dados
+- Implementar tipos TypeScript para as tabelas do Supabase
+
+## Estilização
+- Utilizar Tailwind CSS para estilização
+- Seguir o padrão de design system com componentes reutilizáveis
+- Implementar temas claros/escuros com next-themes
+
+## Autenticação
+- Utilizar o sistema de autenticação do Supabase
+- Implementar middleware para rotas protegidas
+- Utilizar o padrão de contexto para gerenciamento de estado de autenticação
+
+## Formulários
+- Utilizar react-hook-form para gerenciamento de formulários
+- Implementar validação com zod
+- Utilizar componentes de UI consistentes para inputs e feedback
+
+## API
+- Implementar API Routes para operações do servidor
+- Utilizar Server Actions para mutações de dados
+- Seguir o padrão RESTful para endpoints de API
+
+## Performance
+- Implementar estratégias de cache com Next.js
+- Utilizar Server Components para reduzir JavaScript no cliente
+- Implementar carregamento lazy de componentes quando apropriado
+- Otimizar imagens com o componente Image do Next.js
+
+## Testes
+- Implementar testes unitários para componentes e funções
+- Utilizar testes de integração para fluxos complexos
+- Implementar testes end-to-end para fluxos críticos
+
+## Implantação
+- Configurar CI/CD para implantação automática
+- Utilizar variáveis de ambiente para configurações sensíveis
+- Implementar preview deployments para pull requests 
