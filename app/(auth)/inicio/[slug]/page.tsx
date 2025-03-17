@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Star } from 'lucide-react'
 import { ProductGrid } from '@/components/ProductGrid'
 import { CategoryFilter } from '@/components/CategoryFilter'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type Store = Database['public']['Tables']['stores']['Row'] & {
   store_categories: {
@@ -96,8 +97,56 @@ export default function StorePage({
 
   if (isLoading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-gray-900 dark:border-white" />
+      <div className="space-y-8">
+        {/* Banner Skeleton */}
+        <div className="mb-8">
+          <Skeleton className="relative mb-6 h-[300px] w-full rounded-lg bg-gray-200 dark:bg-[#262626]" />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-7 w-48 bg-gray-200 dark:bg-[#262626]" />
+              <Skeleton className="h-4 w-4 bg-gray-200 dark:bg-[#262626]" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-24 bg-gray-200 dark:bg-[#262626]" />
+              <div className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <Skeleton className="h-4 w-16 bg-gray-200 dark:bg-[#262626]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Menu Section Skeleton */}
+        <div className="mt-8">
+          <Skeleton className="mb-6 h-7 w-32 bg-gray-200 dark:bg-[#262626]" />
+
+          {/* Categories Skeleton */}
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton
+                key={i}
+                className="h-8 w-24 flex-shrink-0 rounded-full bg-gray-200 dark:bg-[#262626]"
+              />
+            ))}
+          </div>
+
+          {/* Products Grid Skeleton */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-lg border dark:border-[#343434] dark:bg-[#232323]"
+              >
+                <Skeleton className="h-48 w-full bg-gray-200 dark:bg-[#262626]" />
+                <div className="space-y-3 p-4">
+                  <Skeleton className="h-5 w-3/4 bg-gray-200 dark:bg-[#262626]" />
+                  <Skeleton className="h-4 w-1/4 bg-gray-200 dark:bg-[#262626]" />
+                  <Skeleton className="h-4 w-full bg-gray-200 dark:bg-[#262626]" />
+                  <Skeleton className="h-4 w-1/3 bg-gray-200 dark:bg-[#262626]" />
+                  <Skeleton className="h-9 w-full bg-gray-200 dark:bg-[#262626]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -138,6 +187,8 @@ export default function StorePage({
             fill
             className="object-cover"
             priority
+            quality={100}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
           />
         </div>
 

@@ -48,6 +48,9 @@ export function ProductGrid({ products }: ProductGridProps) {
               width={200}
               height={200}
               className="h-48 w-full rounded-t-lg object-cover"
+              quality={100}
+              priority
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           </CardHeader>
           <CardContent className="flex-grow pb-2">

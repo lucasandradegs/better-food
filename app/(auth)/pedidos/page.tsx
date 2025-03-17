@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { OrderCard } from '@/components/OrderCard'
+import { LayoutGrid, Table as TableIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 type OrderItem = {
   id: string
@@ -46,6 +48,7 @@ type Payment = {
   payment_method: 'CREDIT_CARD' | 'PIX'
   created_at: string
   updated_at: string
+  response_data?: string
 }
 
 type Order = {
@@ -165,7 +168,22 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [paymentFilter, setPaymentFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   const supabase = createClientComponentClient<Database>()
+
+  // Carregar preferência de visualização
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('ordersViewMode')
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      setViewMode(savedViewMode)
+    }
+  }, [])
+
+  // Salvar preferência de visualização
+  const handleViewModeChange = (newMode: 'table' | 'cards') => {
+    setViewMode(newMode)
+    localStorage.setItem('ordersViewMode', newMode)
+  }
 
   console.log(orders)
 
@@ -606,6 +624,76 @@ export default function Orders() {
     }
   }
 
+  async function handleCancelPayment(payment: Payment) {
+    try {
+      if (!payment.response_data) {
+        toast.error('Dados do pagamento não encontrados')
+        return
+      }
+
+      // Verifica se response_data é uma string ou objeto
+      const responseData =
+        typeof payment.response_data === 'string'
+          ? JSON.parse(payment.response_data)
+          : payment.response_data
+
+      const charge = responseData.charges?.[0]
+
+      if (!charge?.id) {
+        toast.error('ID da cobrança não encontrado')
+        return
+      }
+
+      // Pegar o amount do response_data ou usar o amount do pagamento
+      const amount = charge.amount?.value || payment.amount
+
+      if (!amount) {
+        toast.error('Valor do pagamento não encontrado')
+        return
+      }
+
+      const response = await fetch('/api/cancel-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chargeId: charge.id,
+          amount,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Tratamento específico para erros do PagSeguro
+        if (data.details?.error_messages?.[0]) {
+          const error = data.details.error_messages[0]
+
+          if (
+            error.code === 'INTERNAL_SERVER_ERROR' &&
+            error.error === 'unable_refund'
+          ) {
+            throw new Error(
+              'Não é possível cancelar este pagamento no momento. Isso pode ocorrer se o pagamento ainda estiver em processamento ou se já passou o prazo limite para cancelamento.',
+            )
+          }
+        }
+        throw new Error(data.error || 'Erro ao cancelar pagamento')
+      }
+
+      toast.success('Pagamento cancelado com sucesso')
+
+      // Atualizar o status do pedido para cancelado
+      await handleStatusUpdate(payment.order_id, 'cancelled')
+    } catch (error) {
+      console.error('Erro ao cancelar pagamento:', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao cancelar pagamento',
+      )
+    }
+  }
+
   if (loading) {
     return (
       <div className="">
@@ -621,9 +709,31 @@ export default function Orders() {
   if (isAdmin) {
     return (
       <div className="">
-        <h1 className="mb-6 text-lg font-bold tracking-tight dark:text-white">
-          Gerenciar Pedidos
-        </h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-lg font-bold tracking-tight dark:text-white">
+            Gerenciar Pedidos
+          </h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              handleViewModeChange(viewMode === 'table' ? 'cards' : 'table')
+            }
+            className="gap-2 dark:border-[#343434] dark:bg-[#232323]"
+          >
+            {viewMode === 'table' ? (
+              <>
+                <LayoutGrid className="h-4 w-4" />
+                Ver em Cards
+              </>
+            ) : (
+              <>
+                <TableIcon className="h-4 w-4" />
+                Ver em Tabela
+              </>
+            )}
+          </Button>
+        </div>
 
         <div className="mb-6 flex flex-wrap gap-4">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -663,107 +773,139 @@ export default function Orders() {
           </Select>
         </div>
 
-        <div className="rounded-md border dark:border-[#343434]">
-          <Table className="text-xs">
-            <TableHeader className="dark:border-[#343434]">
-              <TableRow>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Itens</TableHead>
-                <TableHead>Valor Total</TableHead>
-                <TableHead>Status do Pagamento</TableHead>
-                <TableHead>Status do Pedido</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="text-xs font-medium">
-                    {order.id.slice(0, 8)}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <div className="flex flex-col">
-                      <span>{order?.customer?.email}</span>
-                      <span className="text-muted-foreground">
-                        ID: {order?.user_id?.slice(0, 8)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-[300px]">
-                      {order.items.map((item, index) => (
-                        <div key={item.id} className="text-xs">
-                          {item.quantity}x {item.product.name}
-                          {index < order.items.length - 1 && ', '}
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatCurrency(order.total_amount)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={cn(
-                        order.payments[0]?.status === 'PAID'
-                          ? 'bg-teal-100 dark:bg-teal-950'
-                          : 'bg-yellow-100 dark:bg-yellow-950',
-                        order.payments[0]?.status === 'PAID'
-                          ? 'text-teal-800 dark:text-teal-400'
-                          : 'text-yellow-800 dark:text-yellow-400',
-                        order.payments[0]?.status === 'PAID'
-                          ? 'hover:bg-teal-200 dark:hover:bg-teal-800'
-                          : 'hover:bg-yellow-200 dark:hover:bg-yellow-800',
-                        'text-xs',
-                      )}
-                    >
-                      {order.payments[0]?.status === 'PAID'
-                        ? 'PAGO'
-                        : 'PENDENTE'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={`flex items-center gap-2 ${orderStatusMap[order.status].orderBgColor} w-fit`}
-                    >
-                      <StatusDot color={orderStatusMap[order.status].color} />
-                      <span className="text-xs font-medium">
-                        {orderStatusMap[order.status].label}
-                      </span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <select
-                      className="rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
-                      value={order.status}
-                      onChange={(e) =>
-                        handleStatusUpdate(
-                          order.id,
-                          e.target
-                            .value as Database['public']['Enums']['order_status'],
-                        )
-                      }
-                      disabled={updating === order.id}
-                    >
-                      {ALLOWED_STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>
-                          {orderStatusMap[status].label}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
+        {viewMode === 'table' ? (
+          <div className="rounded-md border dark:border-[#343434]">
+            <Table className="text-xs">
+              <TableHeader className="dark:border-[#343434]">
+                <TableRow>
+                  <TableHead>Pedido</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Itens</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead>Status do Pagamento</TableHead>
+                  <TableHead>Status do Pedido</TableHead>
+                  <TableHead>Ações</TableHead>
+                  <TableHead>Cancelamento</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="text-xs font-medium">
+                      {order.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex flex-col">
+                        <span>{order?.customer?.email}</span>
+                        <span className="text-muted-foreground">
+                          ID: {order?.user_id?.slice(0, 8)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-[300px]">
+                        {order.items.map((item, index) => (
+                          <div key={item.id} className="text-xs">
+                            {item.quantity}x {item.product.name}
+                            {index < order.items.length - 1 && ', '}
+                          </div>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatCurrency(order.total_amount)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={cn(
+                          order.payments[0]?.status === 'PAID'
+                            ? 'bg-teal-100 dark:bg-teal-950'
+                            : 'bg-yellow-100 dark:bg-yellow-950',
+                          order.payments[0]?.status === 'PAID'
+                            ? 'text-teal-800 dark:text-teal-400'
+                            : 'text-yellow-800 dark:text-yellow-400',
+                          order.payments[0]?.status === 'PAID'
+                            ? 'hover:bg-teal-200 dark:hover:bg-teal-800'
+                            : 'hover:bg-yellow-200 dark:hover:bg-yellow-800',
+                          'text-xs',
+                        )}
+                      >
+                        {order.payments[0]?.status === 'PAID'
+                          ? 'PAGO'
+                          : 'PENDENTE'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`flex items-center gap-2 ${orderStatusMap[order.status].orderBgColor} w-fit`}
+                      >
+                        <StatusDot color={orderStatusMap[order.status].color} />
+                        <span className="text-xs font-medium">
+                          {orderStatusMap[order.status].label}
+                        </span>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        className="rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
+                        value={order.status}
+                        onChange={(e) =>
+                          handleStatusUpdate(
+                            order.id,
+                            e.target
+                              .value as Database['public']['Enums']['order_status'],
+                          )
+                        }
+                        disabled={updating === order.id}
+                      >
+                        {ALLOWED_STATUS_OPTIONS.map((status) => (
+                          <option key={status} value={status}>
+                            {orderStatusMap[status].label}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell>
+                      {order.payments[0]?.status === 'PAID' &&
+                        order.status !== 'cancelled' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() =>
+                              handleCancelPayment(order.payments[0])
+                            }
+                            className="text-xs"
+                          >
+                            Cancelar Pagamento
+                          </Button>
+                        )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                isAdmin={true}
+                onStatusUpdate={handleStatusUpdate}
+                updating={updating === order.id}
+              />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
 
   // Se for cliente, mostra os cards
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-2xl font-bold">Meus Pedidos</h1>
+    <div className="">
+      <h1 className="mb-6 text-lg font-bold tracking-tight dark:text-white">
+        Meus Pedidos
+      </h1>
 
       <div className="mb-6 flex flex-wrap gap-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>

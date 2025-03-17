@@ -30,7 +30,7 @@ export default function Login() {
         <h1 className="mt-2 text-3xl font-bold tracking-tighter sm:text-4xl">
           Faça login para começar a ter o controle do seu restaurante
         </h1>
-        <span className="text-muted-foreground mt-4 pb-10 text-sm">
+        <span className="mt-4 pb-10 text-sm text-muted-foreground">
           Faça login com sua conta do Google para acessar o seu dashboard
         </span>
         <Button
@@ -42,7 +42,7 @@ export default function Login() {
           Entrar com Google
         </Button>
 
-        <span className="text-muted-foreground pt-4 text-sm">
+        <span className="pt-4 text-sm text-muted-foreground">
           Criando uma conta, você aceita os termos e condições de uso
         </span>
       </div>

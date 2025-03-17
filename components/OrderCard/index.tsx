@@ -7,6 +7,7 @@ import {
   AlertCircle,
   CreditCard,
   Star,
+  ConstructionIcon,
 } from 'lucide-react'
 import Pix from '@/public/pix'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +19,16 @@ import Link from 'next/link'
 import { Database } from '@/lib/database.types'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { OrderRatingDialog } from '../OrderRatingDialog'
+
+const ALLOWED_STATUS_OPTIONS: Database['public']['Enums']['order_status'][] = [
+  'paid',
+  'pending',
+  'preparing',
+  'ready',
+  'delivered',
+  'cancelled',
+  'refunded',
+]
 
 type OrderItem = {
   id: string
@@ -59,6 +70,9 @@ type Order = {
     logo_url: string | null
   }
   discount_amount: number
+  customer?: {
+    email: string
+  }
 }
 // @ts-expect-error its working
 type OrderRating = Database['public']['Tables']['order_ratings']['Row']
@@ -130,6 +144,12 @@ const orderStatusMap: Record<
 
 interface OrderCardProps {
   order: Order
+  isAdmin?: boolean
+  onStatusUpdate?: (
+    orderId: string,
+    newStatus: Database['public']['Enums']['order_status'],
+  ) => Promise<void>
+  updating?: boolean
 }
 
 function StatusDot({ color }: { color: string }) {
@@ -148,7 +168,12 @@ function StatusDot({ color }: { color: string }) {
   )
 }
 
-export function OrderCard({ order }: OrderCardProps) {
+export function OrderCard({
+  order,
+  isAdmin,
+  onStatusUpdate,
+  updating,
+}: OrderCardProps) {
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false)
   const [hasRating, setHasRating] = useState(false)
   const [isCheckingRating, setIsCheckingRating] = useState(true)
@@ -179,6 +204,8 @@ export function OrderCard({ order }: OrderCardProps) {
   const handleRatingSubmitted = () => {
     setHasRating(true)
   }
+
+  console.log(order)
 
   return (
     <Card className="flex w-full min-w-0 flex-col dark:border-[#343434] dark:bg-[#232323]">
@@ -256,7 +283,10 @@ export function OrderCard({ order }: OrderCardProps) {
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Desconto do PIX (5%):</span>
                 <span className="shrink-0 tabular-nums text-green-600 dark:text-green-400">
-                  -{formatCurrency(order.total_amount * 0.05)}
+                  -
+                  {formatCurrency(
+                    (order.total_amount - order.discount_amount) * 0.05,
+                  )}
                 </span>
               </div>
             )}
@@ -265,8 +295,10 @@ export function OrderCard({ order }: OrderCardProps) {
               <span className="shrink-0 text-sm font-medium tabular-nums">
                 {formatCurrency(
                   order.payments[0]?.payment_method === 'PIX'
-                    ? order.payments[0]?.amount
-                    : order.total_amount,
+                    ? order.total_amount -
+                        order.discount_amount -
+                        (order.total_amount - order.discount_amount) * 0.05
+                    : order.total_amount - order.discount_amount,
                 )}
               </span>
             </div>
@@ -298,22 +330,58 @@ export function OrderCard({ order }: OrderCardProps) {
           <div className="flex items-center gap-2">
             <Package2 className="h-4 w-4 shrink-0 text-muted-foreground" />
             <h4 className="min-w-0 truncate text-sm font-medium max-[420px]:hidden">
-              Informações do estabelecimento
+              {isAdmin
+                ? 'Informações do Cliente'
+                : 'Informações do estabelecimento'}
             </h4>
             <h4 className="hidden text-xs max-[420px]:block">
-              Estabelecimento
+              {isAdmin ? 'Cliente' : 'Estabelecimento'}
             </h4>
           </div>
-          <p className="truncate text-xs font-medium">{order.store.name}</p>
+          {isAdmin ? (
+            <div className="flex flex-col gap-1">
+              <p className="truncate text-xs font-medium">
+                {order.customer?.email}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ID: {order.user_id.slice(0, 8)}
+              </p>
+              <div className="mt-2">
+                <select
+                  className="w-full rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
+                  value={order.status}
+                  onChange={(e) =>
+                    onStatusUpdate?.(
+                      order.id,
+                      e.target
+                        .value as Database['public']['Enums']['order_status'],
+                    )
+                  }
+                  disabled={updating}
+                >
+                  {ALLOWED_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {orderStatusMap[status].label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : (
+            <p className="truncate text-xs font-medium">{order.store.name}</p>
+          )}
         </div>
 
         <div className="flex w-full gap-2">
-          {paymentStatus === 'PENDING' && (
+          {paymentStatus === 'PENDING' && !isAdmin && (
             <Link href={`/checkout?orderId=${order.id}`} className="flex-1">
               <Button className="w-full">Pagar Pedido</Button>
             </Link>
           )}
-          {order.status === 'delivered' && !isCheckingRating && !hasRating ? (
+          {order.status === 'delivered' &&
+          !isCheckingRating &&
+          !hasRating &&
+          !isAdmin ? (
             <Button
               onClick={() => setIsRatingDialogOpen(true)}
               className="flex-1 gap-2"

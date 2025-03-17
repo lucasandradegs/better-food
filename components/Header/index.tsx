@@ -10,18 +10,18 @@ import {
 
 export function Header() {
   return (
-    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-b-gray-200 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-b-gray-200 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between scroll-smooth px-4">
         <nav className="hidden items-center space-x-6 md:flex">
           <Link
             href="#features"
-            className="hover:text-primary text-sm font-medium transition-colors"
+            className="text-sm font-medium transition-colors hover:text-primary"
           >
             Funcionalidades
           </Link>
           <Link
             href="#testimonials"
-            className="hover:text-primary text-sm font-medium transition-colors"
+            className="text-sm font-medium transition-colors hover:text-primary"
           >
             Depoimentos
           </Link>
@@ -52,13 +52,13 @@ export function Header() {
             <nav className="mt-6 flex flex-col space-y-4">
               <Link
                 href="#features"
-                className="hover:text-primary text-sm font-medium transition-colors"
+                className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Funcionalidades
               </Link>
               <Link
                 href="#testimonials"
-                className="hover:text-primary text-sm font-medium transition-colors"
+                className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Depoimentos
               </Link>
