@@ -13,14 +13,11 @@ export function HeroSection() {
       </div>
       <div className="z-10 space-y-4 text-center">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
-          Facilite a gestão do seu restaurante com o{' '}
-          <span className="hidden xl:inline">
-            <br />
-          </span>
-          <span className="text-red-600">BetterFood</span>
+          <span className="text-red-600">Muita</span> praticidade para acabar
+          com sua <span className="text-red-600">Fome</span>
         </h1>
         <p className="mx-auto max-w-[700px] text-sm text-muted-foreground md:text-xl">
-          Simplifique a gestão do seu restaurante com o BetterFood. Controle
+          Simplifique a gestão do seu restaurante com o MuitaFome. Controle
           pedidos, estoque e financeiro de forma eficiente.
         </p>
       </div>
@@ -46,7 +43,7 @@ export function HeroSection() {
           <div className="overflow-hidden rounded-lg">
             <Image
               src="/heroSection.png"
-              alt="BetterFood Dashboard Preview"
+              alt="MuitaFome Dashboard Preview"
               width={1280}
               height={720}
               className="w-full"
