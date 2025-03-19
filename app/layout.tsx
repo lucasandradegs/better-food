@@ -18,8 +18,8 @@ const geistMono = GeistMono({
 })
 
 export const metadata: Metadata = {
-  title: 'Better Food',
-  description: 'Seu delivery de comida',
+  title: 'MuitaFome',
+  description: 'A melhor solução para o seu restaurante',
 }
 
 export default function RootLayout({
