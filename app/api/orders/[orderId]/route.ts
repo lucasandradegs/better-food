@@ -2,6 +2,18 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
+const statusEmPortugues: Record<string, string> = {
+  pending: 'pendente',
+  processing: 'em processamento',
+  paid: 'pago',
+  preparing: 'em preparação',
+  ready: 'pronto para entrega',
+  delivering: 'em entrega',
+  delivered: 'entregue',
+  cancelled: 'cancelado',
+  refunded: 'reembolsado',
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
@@ -97,7 +109,7 @@ export async function PATCH(
       .insert({
         user_id: updatedOrder.user_id,
         title: 'Status do pedido atualizado',
-        description: `Seu pedido agora está ${newStatus.toLowerCase()}.`,
+        description: `Seu pedido agora está ${statusEmPortugues[newStatus] || newStatus.toLowerCase()}.`,
         status: 'unread',
         viewed: false,
         path: '/pedidos',

@@ -226,17 +226,41 @@ export default function Orders() {
   // Mutation para atualizar status
   const { mutate: updateStatus } = useMutation({
     mutationFn: updateOrderStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
-      toast.success('Status do pedido atualizado com sucesso')
+    onMutate: async ({ orderId, newStatus }) => {
+      // Cancelar queries em andamento
+      await queryClient.cancelQueries({ queryKey: ['orders'] })
+
+      // Snapshot do estado anterior
+      const previousOrders = queryClient.getQueryData(['orders'])
+
+      // Atualizar o cache otimisticamente
+      queryClient.setQueryData(
+        ['orders'],
+        (old: OrdersResponse | undefined) => {
+          if (!old) return old
+          return {
+            ...old,
+            orders: old.orders.map((order) =>
+              order.id === orderId ? { ...order, status: newStatus } : order,
+            ),
+          }
+        },
+      )
+
+      return { previousOrders }
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Em caso de erro, reverter para o estado anterior
+      queryClient.setQueryData(['orders'], context?.previousOrders)
       console.error('Erro ao atualizar status:', error)
       toast.error(
         error instanceof Error
           ? error.message
           : 'Erro ao atualizar status do pedido',
       )
+    },
+    onSuccess: () => {
+      toast.success('Status do pedido atualizado com sucesso')
     },
   })
 
