@@ -35,16 +35,14 @@ export function NotificationsPopover() {
 
     const fetchNotifications = async () => {
       setIsLoading(true)
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userProfile.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
+      const response = await fetch('/api/notifications')
+      const data = await response.json()
 
-      if (data) {
-        setNotifications(data)
-        const unviewedCount = data.filter((n) => !n.viewed).length
+      if (data.notifications) {
+        setNotifications(data.notifications)
+        const unviewedCount = data.notifications.filter(
+          (n: Notification) => !n.viewed,
+        ).length
         setUnreadCount(unviewedCount)
       }
       setIsLoading(false)
@@ -89,12 +87,18 @@ export function NotificationsPopover() {
   }, [userProfile?.id])
 
   const markAsRead = async (notificationId: string) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ status: 'read' })
-      .eq('id', notificationId)
+    const response = await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'markAsRead',
+        notificationId,
+      }),
+    })
 
-    if (!error) {
+    if (response.ok) {
       setNotifications((current) =>
         current.map((notification) =>
           notification.id === notificationId
@@ -106,13 +110,17 @@ export function NotificationsPopover() {
   }
 
   const markAllAsRead = async () => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ status: 'read' })
-      .eq('user_id', userProfile?.id)
-      .eq('status', 'unread')
+    const response = await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'markAllAsRead',
+      }),
+    })
 
-    if (!error) {
+    if (response.ok) {
       setNotifications((current) =>
         current.map((notification) => ({ ...notification, status: 'read' })),
       )
@@ -124,19 +132,24 @@ export function NotificationsPopover() {
     const notification = notifications.find((n) => n.id === notificationId)
     if (!notification) return
 
-    const { error } = await supabase
-      .from('notifications')
-      .update({ viewed: true })
-      .eq('id', notificationId)
+    const response = await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'markAsViewed',
+        notificationId,
+      }),
+    })
 
-    if (!error) {
+    if (response.ok) {
       setNotifications((current) =>
         current.map((n) =>
           n.id === notificationId ? { ...n, viewed: true } : n,
         ),
       )
 
-      // Se a notificação tiver um path, navega para ele
       if (notification.path) {
         router.push(notification.path)
       }
@@ -144,13 +157,17 @@ export function NotificationsPopover() {
   }
 
   const markAllAsViewed = async () => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ viewed: true })
-      .eq('user_id', userProfile?.id)
-      .eq('viewed', false)
+    const response = await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'markAllAsViewed',
+      }),
+    })
 
-    if (!error) {
+    if (response.ok) {
       setNotifications((current) =>
         current.map((notification) => ({ ...notification, viewed: true })),
       )

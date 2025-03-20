@@ -20,16 +20,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
-import { useAuth } from '@/contexts/AuthContext'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Database } from '@/lib/database.types'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 
 interface CreateStoreDialogProps {
   onStoreCreated?: () => void
+}
+
+interface StoreCategory {
+  id: string
+  name: string
+}
+
+const fetchCategories = async (): Promise<StoreCategory[]> => {
+  const response = await fetch('/api/store-categories')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar categorias')
+  }
+  return response.json()
 }
 
 export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
@@ -43,31 +54,12 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
   })
 
   const { toast } = useToast()
-  const { userProfile } = useAuth()
-  const supabase = createClientComponentClient<Database>()
   const router = useRouter()
 
-  const [storeCategories, setStoreCategories] = useState<
-    Array<{
-      id: string
-      name: string
-    }>
-  >([])
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from('store_categories')
-        .select('id, name')
-        .order('name')
-
-      if (data && !error) {
-        setStoreCategories(data)
-      }
-    }
-
-    fetchCategories()
-  }, [])
+  const { data: storeCategories = [] } = useQuery({
+    queryKey: ['store-categories'],
+    queryFn: fetchCategories,
+  })
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -90,47 +82,6 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const uploadLogo = async (file: File) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random()}.${fileExt}`
-    const filePath = `store-logos/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('logos')
-      .upload(filePath, file)
-
-    if (uploadError) {
-      throw new Error('Erro ao fazer upload da logo')
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('logos').getPublicUrl(filePath)
-
-    return publicUrl
-  }
-
-  function isValidUUID(uuid: string) {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    return uuidRegex.test(uuid)
-  }
-
-  const createNotification = async (storeName: string) => {
-    const { error } = await supabase.from('notifications').insert({
-      user_id: userProfile?.id,
-      title: 'Loja cadastrada com sucesso! 🎉',
-      description: `Sua loja "${storeName}" está pronta para o uso!`,
-      status: 'unread',
-      viewed: false,
-      path: '/dashboard',
-    })
-
-    if (error) {
-      console.error('Erro ao criar notificação:', error)
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -146,32 +97,23 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
     setIsLoading(true)
 
     try {
-      let logoUrl = null
-
+      const submitData = new FormData()
+      submitData.append('name', formData.name)
+      submitData.append('category_id', formData.category_id)
       if (formData.logo) {
-        logoUrl = await uploadLogo(formData.logo)
+        submitData.append('logo', formData.logo)
       }
 
-      if (!isValidUUID(formData.category_id)) {
-        toast({
-          title: 'Erro',
-          description: 'Categoria inválida',
-          variant: 'destructive',
-        })
-        return
-      }
-
-      const { error: submitError } = await supabase.from('stores').insert({
-        name: formData.name,
-        category_id: formData.category_id,
-        logo_url: logoUrl,
-        admin_id: userProfile?.id,
+      const response = await fetch('/api/stores', {
+        method: 'POST',
+        body: submitData,
       })
 
-      if (submitError) throw submitError
+      const data = await response.json()
 
-      // Cria a notificação após cadastrar a loja
-      await createNotification(formData.name)
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao criar loja')
+      }
 
       toast({
         title: 'Sucesso!',
@@ -186,10 +128,7 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
       })
       setLogoPreview(null)
 
-      // Chama o callback se ele existir
       onStoreCreated?.()
-
-      // Recarrega a página após o cadastro
       router.refresh()
     } catch (err) {
       console.error('Erro completo:', err)

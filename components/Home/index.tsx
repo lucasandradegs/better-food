@@ -1,5 +1,3 @@
-'use client'
-
 import { Categories } from '@/components/Categories'
 import { FeaturedRestaurants } from '@/components/FeaturedRestaurants'
 import { Promotions } from '@/components/Promotions'

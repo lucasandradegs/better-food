@@ -12,10 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import Image from 'next/image'
 import { Database } from '@/lib/database.types'
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useToast } from '@/hooks/use-toast'
 import { ProductForm } from '../ProductForm'
-import { useAuth } from '@/contexts/AuthContext'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,6 +98,7 @@ interface ProductListProps {
   productCategories: Database['public']['Tables']['product_categories']['Row'][]
   onProductUpdated: () => void
   isLoading?: boolean
+  storeId?: string
 }
 
 export function ProductList({
@@ -107,14 +106,13 @@ export function ProductList({
   productCategories,
   onProductUpdated,
   isLoading = false,
+  storeId,
 }: ProductListProps) {
   const [productToEdit, setProductToEdit] = useState<Product | null>(null)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const supabase = createClientComponentClient<Database>()
   const { toast } = useToast()
-  const { userProfile } = useAuth()
 
   if (isLoading) {
     return <ProductListSkeleton />
@@ -131,24 +129,19 @@ export function ProductList({
   })
 
   const handleDelete = async () => {
-    if (!productToDelete || !userProfile?.id) return
+    if (!productToDelete || !storeId) return
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productToDelete.id)
+      const response = await fetch(
+        `/api/stores/${storeId}/products/${productToDelete.id}`,
+        {
+          method: 'DELETE',
+        },
+      )
 
-      if (error) throw error
-
-      await supabase.from('notifications').insert({
-        user_id: userProfile.id,
-        title: 'Produto excluído com sucesso! 🗑️',
-        description: `O produto "${productToDelete.name}" já não está mais disponível no cardápio.`,
-        status: 'unread',
-        viewed: false,
-        path: '/dashboard',
-      })
+      if (!response.ok) {
+        throw new Error('Erro ao excluir produto')
+      }
 
       toast({
         title: 'Sucesso!',
@@ -295,6 +288,7 @@ export function ProductList({
           onProductCreated={onProductUpdated}
           productToEdit={productToEdit}
           onClose={() => setProductToEdit(null)}
+          storeId={storeId}
         />
       )}
 

@@ -1,46 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Database } from '@/lib/database.types'
-import { useAuth } from '@/contexts/AuthContext'
-import { CreateStoreDialog } from '@/components/Store/CreateStoreDialog'
+import { useQuery } from '@tanstack/react-query'
 import { Store } from 'lucide-react'
+import { CreateStoreDialog } from '@/components/Store/CreateStoreDialog'
 import AdminDashboard from '@/components/Admin'
 
+const fetchUserStore = async () => {
+  const response = await fetch('/api/user-store')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar loja')
+  }
+  return response.json()
+}
+
 export default function DashboardPage() {
-  const [userStore, setUserStore] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
-  const { userProfile } = useAuth()
-  const supabase = createClientComponentClient<Database>()
-
-  useEffect(() => {
-    const fetchUserStore = async () => {
-      if (!userProfile?.id) return
-
-      const { data: stores, error } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('admin_id', userProfile.id)
-        .limit(1)
-
-      if (error) {
-        console.error('Erro ao buscar loja:', error)
-        setIsLoading(false)
-        return
-      }
-
-      setUserStore(stores?.[0] || null)
-      setIsLoading(false)
-    }
-
-    fetchUserStore()
-  }, [userProfile?.id, refreshKey])
+  const {
+    data: userStore,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['user-store'],
+    queryFn: fetchUserStore,
+  })
 
   const handleStoreCreated = () => {
-    setRefreshKey((prev) => prev + 1)
+    refetch()
   }
 
   if (isLoading) {

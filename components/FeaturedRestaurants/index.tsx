@@ -3,10 +3,9 @@
 import { Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/database.types'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 
 type Store = Database['public']['Tables']['stores']['Row'] & {
   store_categories: {
@@ -23,35 +22,19 @@ function generateSlug(name: string) {
     .replace(/(^-|-$)+/g, '')
 }
 
+const fetchFeaturedRestaurants = async (): Promise<Store[]> => {
+  const response = await fetch('/api/featured-restaurants')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar restaurantes')
+  }
+  return response.json()
+}
+
 export function FeaturedRestaurants() {
-  const [stores, setStores] = useState<Store[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClientComponentClient<Database>()
-
-  useEffect(() => {
-    const fetchStores = async () => {
-      const { data, error } = await supabase
-        .from('stores')
-        .select(
-          `
-          *,
-          store_categories (
-            name
-          )
-        `,
-        )
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Erro ao buscar lojas:', error)
-      } else {
-        setStores(data || [])
-      }
-      setIsLoading(false)
-    }
-
-    fetchStores()
-  }, [])
+  const { data: stores = [], isLoading } = useQuery({
+    queryKey: ['featured-restaurants'],
+    queryFn: fetchFeaturedRestaurants,
+  })
 
   if (isLoading) {
     return (

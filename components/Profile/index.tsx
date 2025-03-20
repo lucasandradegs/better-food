@@ -11,8 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useQuery } from '@tanstack/react-query'
 import { Database } from '@/lib/database.types'
 import { Skeleton } from '@/components/ui/skeleton'
 import NumberFlow from '@number-flow/react'
@@ -77,201 +76,43 @@ const orderStatusMap: Record<
   delivering: { label: 'Em entrega', color: 'bg-orange-500' },
 }
 
+const fetchAdminStats = async (): Promise<AdminStats> => {
+  const response = await fetch('/api/profile/admin-stats')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar estatísticas do admin')
+  }
+  return response.json()
+}
+
+const fetchCustomerStats = async (): Promise<CustomerStats> => {
+  const response = await fetch('/api/profile/customer-stats')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar estatísticas do cliente')
+  }
+  return response.json()
+}
+
 export default function ProfileDetails({
   name,
   email,
   image,
 }: ProfileDetailsProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [adminStats, setAdminStats] = useState<AdminStats | null>(null)
-  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null)
-  const supabase = createClientComponentClient<Database>()
   const { userProfile } = useAuth()
 
-  useEffect(() => {
-    const fetchAdminStats = async () => {
-      try {
-        const { data: storeData } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('admin_id', userProfile?.id)
-          .single()
+  const { data: adminStats, isLoading: isLoadingAdmin } = useQuery<AdminStats>({
+    queryKey: ['admin-stats'],
+    queryFn: fetchAdminStats,
+    enabled: userProfile?.role === 'admin',
+  })
 
-        if (!storeData) return null
+  const { data: customerStats, isLoading: isLoadingCustomer } =
+    useQuery<CustomerStats>({
+      queryKey: ['customer-stats'],
+      queryFn: fetchCustomerStats,
+      enabled: userProfile?.role === 'customer',
+    })
 
-        // Total de pedidos e receita
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('*, payments!inner(*)')
-          .eq('store_id', storeData.id)
-          .eq('payments.status', 'PAID')
-          .not('status', 'eq', 'cancelled')
-          .not('status', 'eq', 'refunded')
-
-        // Avaliação média
-        const { data: ratings } = await supabase
-          .from('order_ratings')
-          .select('rating, food_rating')
-          .eq('store_id', storeData.id)
-
-        // Produtos mais vendidos
-        const { data: topProducts } = await supabase.rpc('get_top_products', {
-          store_id_param: storeData.id,
-          limit_param: 5,
-        })
-
-        // Clientes mais frequentes
-        const { data: topCustomers } = await supabase.rpc('get_top_customers', {
-          store_id_param: storeData.id,
-          limit_param: 5,
-        })
-
-        // Pedidos recentes
-        const { data: recentOrders } = await supabase
-          .from('orders')
-          .select(
-            `
-            *,
-            store:stores!inner (
-              name,
-              logo_url
-            ),
-            items:order_items!inner (
-              product:products!inner (
-                name
-              )
-            )
-          `,
-          )
-          .eq('store_id', storeData.id)
-          .order('created_at', { ascending: false })
-          .limit(3)
-
-        const totalRevenue =
-          orders?.reduce((acc, order) => acc + order.total_amount, 0) || 0
-        const avgRating = ratings?.length
-          ? ratings.reduce(
-              (acc, curr) => (curr.rating + curr.food_rating) / 2 + acc,
-              0,
-            ) / ratings.length
-          : 0
-
-        return {
-          totalOrders: orders?.length || 0,
-          totalRevenue,
-          averageRating: Number(avgRating.toFixed(1)),
-          topProducts: topProducts || [],
-          topCustomers: topCustomers || [],
-          recentOrders: (recentOrders as OrderWithStore[]) || [],
-        }
-      } catch (error) {
-        console.error('Erro ao buscar estatísticas do admin:', error)
-        return null
-      }
-    }
-
-    const fetchCustomerStats = async () => {
-      try {
-        const { count: ordersCount } = await supabase
-          .from('orders')
-          .select('*, payments!inner(*)', { count: 'exact', head: true })
-          .eq('user_id', userProfile?.id)
-          .eq('payments.status', 'PAID')
-          .not('status', 'eq', 'cancelled')
-          .not('status', 'eq', 'refunded')
-
-        const { data: ratings } = await supabase
-          .from('order_ratings')
-          .select('rating, food_rating, delivery_rating')
-          .eq('user_id', userProfile?.id)
-
-        const { count: favoritesCount } = await supabase
-          .from('favorite_stores')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userProfile?.id)
-
-        const { data: recentOrders } = await supabase
-          .from('orders')
-          .select(
-            `
-            *,
-            store:stores!inner (
-              name,
-              logo_url
-            ),
-            items:order_items!inner (
-              product:products!inner (
-                name
-              )
-            )
-          `,
-          )
-          .eq('user_id', userProfile?.id)
-          .in('status', [
-            'paid',
-            'delivered',
-            'preparing',
-            'ready',
-            'delivering',
-          ])
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        const totalOrders = ordersCount || 0
-        const avgRating = ratings?.length
-          ? ratings.reduce((acc, curr) => {
-              const orderAvg =
-                (curr.rating + curr.food_rating + curr.delivery_rating) / 3
-              return acc + orderAvg
-            }, 0) / ratings.length
-          : 0
-
-        // Calcula o nível do usuário
-        const userLevel =
-          totalOrders < 50 ? 'Bronze' : totalOrders < 100 ? 'Prata' : 'Ouro'
-        const nextLevel =
-          userLevel === 'Bronze' ? 50 : userLevel === 'Prata' ? 100 : 200
-        const progress = (totalOrders / nextLevel) * 100
-
-        return {
-          totalOrders,
-          averageRating: Number(avgRating.toFixed(1)),
-          favoriteStores: favoritesCount || 0,
-          userLevel,
-          nextLevel,
-          progress,
-          recentOrders: recentOrders || [],
-        }
-      } catch (error) {
-        console.error('Erro ao buscar estatísticas do cliente:', error)
-        return null
-      }
-    }
-
-    const fetchProfileData = async () => {
-      try {
-        setIsLoading(true)
-
-        if (userProfile?.role === 'admin') {
-          const adminData = await fetchAdminStats()
-          setAdminStats(adminData)
-          setCustomerStats(null)
-        } else {
-          const customerData = await fetchCustomerStats()
-          setCustomerStats(customerData)
-          setAdminStats(null)
-        }
-      } catch (error) {
-        console.error('Erro ao buscar dados do perfil:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (userProfile?.id) {
-      fetchProfileData()
-    }
-  }, [supabase, userProfile?.id, userProfile?.role])
+  const isLoading = isLoadingAdmin || isLoadingCustomer
 
   if (isLoading) {
     return <ProfileSkeleton />
@@ -371,24 +212,33 @@ export default function ProfileDetails({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.topProducts.map((product, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 dark:border-[#363636]"
-                  >
-                    <div>
+                {adminStats.topProducts.map(
+                  (
+                    product: {
+                      name: string
+                      quantity: number
+                      revenue: number
+                    },
+                    index: number,
+                  ) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 dark:border-[#363636]"
+                    >
+                      <div>
+                        <p className="text-xs font-medium dark:text-white">
+                          {product.name}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {product.quantity} vendidos
+                        </p>
+                      </div>
                       <p className="text-xs font-medium dark:text-white">
-                        {product.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {product.quantity} vendidos
+                        {formatCurrency(product.revenue)}
                       </p>
                     </div>
-                    <p className="text-xs font-medium dark:text-white">
-                      {formatCurrency(product.revenue)}
-                    </p>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </CardContent>
           </Card>
@@ -402,24 +252,33 @@ export default function ProfileDetails({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.topCustomers.map((customer, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 dark:border-[#363636]"
-                  >
-                    <div>
+                {adminStats.topCustomers.map(
+                  (
+                    customer: {
+                      email: string
+                      orders: number
+                      total_spent: number
+                    },
+                    index: number,
+                  ) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 dark:border-[#363636]"
+                    >
+                      <div>
+                        <p className="text-xs font-medium dark:text-white">
+                          {customer.email}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {customer.orders} pedidos
+                        </p>
+                      </div>
                       <p className="text-xs font-medium dark:text-white">
-                        {customer.email}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {customer.orders} pedidos
+                        {formatCurrency(customer.total_spent)}
                       </p>
                     </div>
-                    <p className="text-xs font-medium dark:text-white">
-                      {formatCurrency(customer.total_spent)}
-                    </p>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </CardContent>
           </Card>
@@ -433,7 +292,7 @@ export default function ProfileDetails({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {adminStats.recentOrders.map((order) => (
+                {adminStats.recentOrders.map((order: OrderWithStore) => (
                   <div
                     key={order.id}
                     className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 dark:border-[#363636]"
@@ -590,7 +449,7 @@ export default function ProfileDetails({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {customerStats.recentOrders.map((order) => (
+                {customerStats.recentOrders.map((order: OrderWithStore) => (
                   <div key={order.id} className="flex items-center space-x-4">
                     <Avatar className="h-10 w-10">
                       <AvatarImage
@@ -625,7 +484,10 @@ export default function ProfileDetails({
                       </div>
                       <p className="text-[11px] text-muted-foreground">
                         {order.items
-                          .map((item) => item.product.name)
+                          .map(
+                            (item: { product: { name: string } }) =>
+                              item.product.name,
+                          )
                           .join(', ')}
                       </p>
                       <p className="text-[11px] text-muted-foreground">

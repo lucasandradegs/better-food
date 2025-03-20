@@ -1,3 +1,3 @@
 export const config = {
-  matcher: '/api/:path*',
+  matcher: ['/api/:path*', '!/api/webhooks/pagbank/:path*'],
 }

@@ -22,10 +22,8 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import Image from 'next/image'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/database.types'
 import { useToast } from '@/hooks/use-toast'
-import { useAuth } from '@/contexts/AuthContext'
 
 type ProductCategory = Database['public']['Tables']['product_categories']['Row']
 
@@ -41,6 +39,7 @@ interface ProductFormProps {
   onProductCreated: () => void
   productToEdit?: Product | null
   onClose?: () => void
+  storeId?: string
 }
 
 export function ProductForm({
@@ -48,6 +47,7 @@ export function ProductForm({
   onProductCreated,
   productToEdit,
   onClose,
+  storeId,
 }: ProductFormProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(
@@ -64,8 +64,6 @@ export function ProductForm({
   })
 
   const { toast } = useToast()
-  const supabase = createClientComponentClient<Database>()
-  const { userProfile } = useAuth()
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -88,41 +86,6 @@ export function ProductForm({
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const uploadImage = async (file: File) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random()}.${fileExt}`
-    const filePath = `product-images/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('logos')
-      .upload(filePath, file)
-
-    if (uploadError) {
-      throw new Error('Erro ao fazer upload da imagem')
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('logos').getPublicUrl(filePath)
-
-    return publicUrl
-  }
-
-  const createNotification = async (productName: string) => {
-    const { error } = await supabase.from('notifications').insert({
-      user_id: userProfile?.id,
-      title: 'Novo produto cadastrado! 🎉',
-      description: `O produto "${productName}" foi cadastrado com sucesso em sua loja.`,
-      status: 'unread',
-      viewed: false,
-      path: '/dashboard',
-    })
-
-    if (error) {
-      console.error('Erro ao criar notificação:', error)
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -130,7 +93,8 @@ export function ProductForm({
       !formData.name ||
       !formData.price ||
       !formData.category_id ||
-      !formData.description
+      !formData.description ||
+      !storeId
     ) {
       toast({
         title: 'Erro',
@@ -143,67 +107,35 @@ export function ProductForm({
     setIsLoading(true)
 
     try {
-      let imageUrl = imagePreview
-
+      const submitData = new FormData()
+      submitData.append('name', formData.name)
+      submitData.append('price', formData.price)
+      submitData.append('category_id', formData.category_id)
+      submitData.append('is_available', formData.is_available.toString())
+      submitData.append('description', formData.description)
       if (formData.image) {
-        imageUrl = await uploadImage(formData.image)
+        submitData.append('image', formData.image)
       }
-
-      const { data: stores, error: storeError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('admin_id', userProfile?.id)
-        .single()
-
-      if (storeError || !stores) {
-        throw new Error('Erro ao buscar informações da loja')
-      }
-
-      const productData = {
-        name: formData.name,
-        price: parseFloat(formData.price),
-        category_id: formData.category_id,
-        is_available: formData.is_available,
-        image_url: imageUrl,
-        store_id: stores.id,
-        description: formData.description,
-      }
-
       if (productToEdit) {
-        const { error: submitError } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', productToEdit.id)
-
-        if (submitError) throw submitError
-
-        await supabase.from('notifications').insert({
-          user_id: userProfile?.id,
-          title: 'Produto atualizado com sucesso! ✏️',
-          description: `O produto "${formData.name}" foi atualizado com sucesso.`,
-          status: 'unread',
-          viewed: false,
-          path: '/dashboard',
-        })
-
-        toast({
-          title: 'Sucesso!',
-          description: 'Produto atualizado com sucesso',
-        })
-      } else {
-        const { error: submitError } = await supabase
-          .from('products')
-          .insert(productData)
-
-        if (submitError) throw submitError
-
-        await createNotification(formData.name)
-
-        toast({
-          title: 'Sucesso!',
-          description: 'Produto cadastrado com sucesso',
-        })
+        submitData.append('productId', productToEdit.id)
+        submitData.append('image_url', productToEdit.image_url || '')
       }
+
+      const response = await fetch(`/api/stores/${storeId}/products`, {
+        method: 'POST',
+        body: submitData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao salvar produto')
+      }
+
+      toast({
+        title: 'Sucesso!',
+        description: productToEdit
+          ? 'Produto atualizado com sucesso'
+          : 'Produto cadastrado com sucesso',
+      })
 
       setIsEditDialogOpen(false)
       setFormData({

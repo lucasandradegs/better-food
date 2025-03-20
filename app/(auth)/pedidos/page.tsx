@@ -1,7 +1,6 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Database } from '@/lib/database.types'
 import {
   Table,
@@ -25,6 +24,8 @@ import {
 import { OrderCard } from '@/components/OrderCard'
 import { LayoutGrid, Table as TableIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useOrdersSubscription } from '@/hooks/useOrdersSubscription'
 
 type OrderItem = {
   id: string
@@ -70,6 +71,11 @@ type Order = {
     email: string
   }
   discount_amount: number
+}
+
+type OrdersResponse = {
+  orders: Order[]
+  isAdmin: boolean
 }
 
 const orderStatusMap: Record<
@@ -159,17 +165,43 @@ function StatusDot({ color }: { color: string }) {
   )
 }
 
+const fetchOrders = async (): Promise<OrdersResponse> => {
+  const response = await fetch('/api/orders')
+  if (!response.ok) {
+    throw new Error('Erro ao buscar pedidos')
+  }
+  const data = await response.json()
+  return data
+}
+
+const updateOrderStatus = async ({
+  orderId,
+  newStatus,
+}: {
+  orderId: string
+  newStatus: Database['public']['Enums']['order_status']
+}) => {
+  const response = await fetch(`/api/orders/${orderId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ newStatus }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Erro ao atualizar status')
+  }
+
+  return response.json()
+}
+
 export default function Orders() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [updating, setUpdating] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [paymentFilter, setPaymentFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
-  const supabase = createClientComponentClient<Database>()
+  const queryClient = useQueryClient()
 
   // Carregar preferência de visualização
   useEffect(() => {
@@ -179,297 +211,43 @@ export default function Orders() {
     }
   }, [])
 
+  // Buscar pedidos
+  const { data, isLoading } = useQuery({
+    queryKey: ['orders'],
+    queryFn: fetchOrders,
+  })
+
+  const orders = data?.orders || []
+  const isAdmin = data?.isAdmin || false
+
+  // Configurar inscrição real-time
+  useOrdersSubscription(isAdmin)
+
+  // Mutation para atualizar status
+  const { mutate: updateStatus } = useMutation({
+    mutationFn: updateOrderStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      toast.success('Status do pedido atualizado com sucesso')
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar status:', error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao atualizar status do pedido',
+      )
+    },
+  })
+
   // Salvar preferência de visualização
   const handleViewModeChange = (newMode: 'table' | 'cards') => {
     setViewMode(newMode)
     localStorage.setItem('ordersViewMode', newMode)
   }
 
-  console.log(orders)
-
-  useEffect(() => {
-    async function checkUserRole() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      setIsAdmin(profile?.role === 'admin')
-    }
-
-    checkUserRole()
-  }, [supabase])
-
-  useEffect(() => {
-    async function fetchOrders() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      try {
-        if (isAdmin) {
-          const { data: storeData, error: storeError } = await supabase
-            .from('stores')
-            .select('id')
-            .eq('admin_id', user.id)
-            .single()
-
-          if (storeError) {
-            console.error('Erro ao buscar loja:', storeError)
-            toast.error('Erro ao buscar informações da loja')
-            setLoading(false)
-            return
-          }
-
-          if (!storeData) {
-            console.warn('Nenhuma loja encontrada para este administrador')
-            setLoading(false)
-            return
-          }
-
-          // Primeiro buscar os pedidos
-          const { data: ordersData, error: ordersError } = await supabase
-            .from('orders')
-            .select(
-              `
-              *,
-              items:order_items (
-                *,
-                product:products (*)
-              ),
-              payments (*),
-              store:stores (
-                name,
-                logo_url
-              )
-            `,
-            )
-            .eq('store_id', storeData.id)
-            .order('created_at', { ascending: false })
-
-          if (ordersError) {
-            console.error('Erro ao buscar pedidos:', ordersError)
-            toast.error('Erro ao carregar os pedidos')
-            setLoading(false)
-            return
-          }
-
-          if (ordersData) {
-            // Depois buscar os emails dos clientes
-            const userIds = [
-              ...new Set(ordersData.map((order) => order.user_id)),
-            ] // Remove duplicados
-            const { data: customersData, error: customersError } =
-              await supabase
-                .from('profiles')
-                .select('id, email')
-                .in('id', userIds)
-
-            if (customersError) {
-              console.error(
-                'Erro ao buscar dados dos clientes:',
-                customersError,
-              )
-              toast.error('Erro ao carregar informações dos clientes')
-              setLoading(false)
-              return
-            }
-
-            // Combinar os dados com verificação de null
-            const ordersWithCustomers = ordersData.map((order) => ({
-              ...order,
-              customer: customersData?.find(
-                (customer) => customer.id === order.user_id,
-              ) ?? {
-                id: order.user_id,
-                email: 'Email não encontrado',
-              },
-            }))
-
-            setOrders(ordersWithCustomers as Order[])
-          }
-        } else {
-          // Construir a query base
-          const query = supabase.from('orders').select(
-            `
-              *,
-              items:order_items (
-                *,
-                product:products (*)
-              ),
-              payments (*),
-              store:stores (
-                name,
-                logo_url
-              ),
-              customer:profiles (
-                email
-              )
-            `,
-          )
-
-          const { data: ordersData, error: ordersError } = await query
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-
-          if (ordersError) {
-            console.error('Erro ao buscar pedidos:', ordersError)
-            return
-          }
-
-          setOrders(ordersData as Order[])
-        }
-
-        setLoading(false)
-      } catch (error) {
-        console.error('Erro ao buscar dados:', error)
-        setLoading(false)
-      }
-    }
-
-    async function initializeRealtime() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      let channel: ReturnType<typeof supabase.channel>
-      if (isAdmin) {
-        const getStoreId = async () => {
-          const { data: storeData } = await supabase
-            .from('stores')
-            .select('id')
-            .eq('admin_id', user.id)
-            .single()
-          return storeData?.id
-        }
-
-        getStoreId().then((storeId) => {
-          if (!storeId) return
-
-          channel = supabase
-            .channel('orders-admin')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'orders',
-                filter: `store_id=eq.${storeId}`,
-              },
-              async (payload) => {
-                if (payload.eventType === 'UPDATE') {
-                  // Buscar o pedido atualizado com todas as informações
-                  const { data: updatedOrder } = await supabase
-                    .from('orders')
-                    .select(
-                      `
-                      *,
-                      items:order_items (
-                        *,
-                        product:products (*)
-                      ),
-                      payments (*),
-                      store:stores (
-                        name,
-                        logo_url
-                      ),
-                      customer:profiles (
-                        email
-                      )
-                    `,
-                    )
-                    .eq('id', payload.new.id)
-                    .single()
-
-                  if (updatedOrder) {
-                    setOrders((prevOrders) =>
-                      prevOrders.map((order) =>
-                        order.id === payload.new.id
-                          ? (updatedOrder as Order)
-                          : order,
-                      ),
-                    )
-                  }
-                }
-              },
-            )
-            .subscribe()
-        })
-      } else {
-        channel = supabase
-          .channel('orders-customer')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'orders',
-              filter: `user_id=eq.${user.id}`,
-            },
-            async (payload) => {
-              if (payload.eventType === 'UPDATE') {
-                // Buscar o pedido atualizado com todas as informações
-                const { data: updatedOrder } = await supabase
-                  .from('orders')
-                  .select(
-                    `
-                    *,
-                    items:order_items (
-                      *,
-                      product:products (*)
-                    ),
-                    payments (*),
-                    store:stores (
-                      name,
-                      logo_url
-                    ),
-                    customer:profiles (
-                      email
-                    )
-                  `,
-                  )
-                  .eq('id', payload.new.id)
-                  .single()
-
-                if (updatedOrder) {
-                  setOrders((prevOrders) =>
-                    prevOrders.map((order) =>
-                      order.id === payload.new.id
-                        ? (updatedOrder as Order)
-                        : order,
-                    ),
-                  )
-                }
-              }
-            },
-          )
-          .subscribe()
-      }
-
-      return () => {
-        if (channel) {
-          channel.unsubscribe()
-        }
-      }
-    }
-
-    fetchOrders()
-    initializeRealtime()
-  }, [supabase, isAdmin])
-
-  useEffect(() => {
-    filterOrders()
-  }, [orders, statusFilter, paymentFilter, dateFilter])
-
-  const filterOrders = () => {
+  // Filtrar pedidos usando useMemo
+  const filteredOrders = useMemo(() => {
     let filtered = [...orders]
 
     // Filtro de status
@@ -498,8 +276,8 @@ export default function Orders() {
       )
     }
 
-    setFilteredOrders(filtered)
-  }
+    return filtered
+  }, [orders, statusFilter, paymentFilter, dateFilter])
 
   async function handleStatusUpdate(
     orderId: string,
@@ -510,191 +288,10 @@ export default function Orders() {
       return
     }
 
-    setUpdating(orderId)
-
-    try {
-      // Verificar se o usuário é admin novamente
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('Usuário não autenticado')
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.role !== 'admin') {
-        throw new Error('Permissão negada')
-      }
-
-      // Atualizar o status no banco de dados
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-
-      if (updateError) {
-        console.error('Erro ao atualizar:', updateError)
-        throw updateError
-      }
-
-      // Buscar o pedido atualizado com todas as informações necessárias
-      const { data: updatedOrderData, error: fetchError } = await supabase
-        .from('orders')
-        .select(
-          `
-          *,
-          items:order_items (
-            *,
-            product:products (*)
-          ),
-          payments (*),
-          store:stores (
-            name,
-            logo_url
-          )
-        `,
-        )
-        .eq('id', orderId)
-        .single()
-
-      if (fetchError) {
-        console.error('Erro ao buscar pedido atualizado:', fetchError)
-        throw fetchError
-      }
-
-      // Buscar informações do cliente
-      const { data: customerData, error: customerError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('id', updatedOrderData.user_id)
-        .single()
-
-      if (customerError) {
-        console.error('Erro ao buscar dados do cliente:', customerError)
-        throw customerError
-      }
-
-      // Combinar os dados do pedido com os dados do cliente
-      const updatedOrder = {
-        ...updatedOrderData,
-        customer: customerData,
-      }
-
-      // Atualizar o estado local mantendo os outros pedidos
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? updatedOrder : order,
-        ),
-      )
-
-      // Criar notificação para o cliente
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: updatedOrder.user_id,
-          title: 'Status do pedido atualizado',
-          description: `Seu pedido agora está ${orderStatusMap[newStatus].label.toLowerCase()}.`,
-          status: 'unread',
-          viewed: false,
-          path: `/pedidos`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-
-      if (notificationError) {
-        console.error('Erro ao criar notificação:', notificationError)
-      }
-
-      toast.success('Status do pedido atualizado com sucesso')
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error)
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Erro ao atualizar status do pedido',
-      )
-    } finally {
-      setUpdating(null)
-    }
+    updateStatus({ orderId, newStatus })
   }
 
-  async function handleCancelPayment(payment: Payment) {
-    try {
-      if (!payment.response_data) {
-        toast.error('Dados do pagamento não encontrados')
-        return
-      }
-
-      // Verifica se response_data é uma string ou objeto
-      const responseData =
-        typeof payment.response_data === 'string'
-          ? JSON.parse(payment.response_data)
-          : payment.response_data
-
-      const charge = responseData.charges?.[0]
-
-      if (!charge?.id) {
-        toast.error('ID da cobrança não encontrado')
-        return
-      }
-
-      // Pegar o amount do response_data ou usar o amount do pagamento
-      const amount = charge.amount?.value || payment.amount
-
-      if (!amount) {
-        toast.error('Valor do pagamento não encontrado')
-        return
-      }
-
-      const response = await fetch('/api/cancel-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chargeId: charge.id,
-          amount,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        // Tratamento específico para erros do PagSeguro
-        if (data.details?.error_messages?.[0]) {
-          const error = data.details.error_messages[0]
-
-          if (
-            error.code === 'INTERNAL_SERVER_ERROR' &&
-            error.error === 'unable_refund'
-          ) {
-            throw new Error(
-              'Não é possível cancelar este pagamento no momento. Isso pode ocorrer se o pagamento ainda estiver em processamento ou se já passou o prazo limite para cancelamento.',
-            )
-          }
-        }
-        throw new Error(data.error || 'Erro ao cancelar pagamento')
-      }
-
-      toast.success('Pagamento cancelado com sucesso')
-
-      // Atualizar o status do pedido para cancelado
-      await handleStatusUpdate(payment.order_id, 'cancelled')
-    } catch (error) {
-      console.error('Erro ao cancelar pagamento:', error)
-      toast.error(
-        error instanceof Error ? error.message : 'Erro ao cancelar pagamento',
-      )
-    }
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="">
         <Skeleton className="mb-6 h-10 w-1/4" />
@@ -854,7 +451,6 @@ export default function Orders() {
                               .value as Database['public']['Enums']['order_status'],
                           )
                         }
-                        disabled={updating === order.id}
                       >
                         {ALLOWED_STATUS_OPTIONS.map((status) => (
                           <option key={status} value={status}>
@@ -870,7 +466,7 @@ export default function Orders() {
                             variant="destructive"
                             size="sm"
                             onClick={() =>
-                              handleCancelPayment(order.payments[0])
+                              handleStatusUpdate(order.id, 'cancelled')
                             }
                             className="text-xs"
                           >
@@ -891,7 +487,6 @@ export default function Orders() {
                 order={order}
                 isAdmin={true}
                 onStatusUpdate={handleStatusUpdate}
-                updating={updating === order.id}
               />
             ))}
           </div>
