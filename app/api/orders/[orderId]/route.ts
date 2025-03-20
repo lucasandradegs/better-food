@@ -1,17 +1,13 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-type RouteParams = {
-  params: {
-    orderId: string
-  }
-}
-
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { orderId: string } },
+) {
   try {
-    const { newStatus } = await request.json()
+    const { newStatus } = await req.json()
     const supabase = createRouteHandlerClient({ cookies })
 
     // Verificar autenticação
