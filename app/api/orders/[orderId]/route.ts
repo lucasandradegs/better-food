@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { orderId: string } },
+  context: { params: { orderId: string } },
 ) {
   try {
     const { newStatus } = await request.json()
@@ -40,7 +40,7 @@ export async function PATCH(
         status: newStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.orderId)
+      .eq('id', context.params.orderId)
 
     if (updateError) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function PATCH(
         )
       `,
       )
-      .eq('id', params.orderId)
+      .eq('id', context.params.orderId)
       .single()
 
     if (fetchError) {
