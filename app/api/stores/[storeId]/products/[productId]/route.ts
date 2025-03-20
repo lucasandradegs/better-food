@@ -4,11 +4,12 @@ import { NextResponse } from 'next/server'
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { storeId: string; productId: string } },
+  { params }: { params: Promise<{ storeId: string; productId: string }> },
 ) {
   try {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const { storeId, productId } = await params
 
     const {
       data: { user },
@@ -24,8 +25,8 @@ export async function DELETE(
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', params.productId)
-      .eq('store_id', params.storeId)
+      .eq('id', productId)
+      .eq('store_id', storeId)
 
     if (error) {
       return NextResponse.json(
