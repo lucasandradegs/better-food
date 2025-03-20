@@ -1,11 +1,15 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function PATCH(
-  request: Request,
-  context: { params: { orderId: string } },
-) {
+type RouteParams = {
+  params: {
+    orderId: string
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { newStatus } = await request.json()
     const supabase = createRouteHandlerClient({ cookies })
@@ -40,7 +44,7 @@ export async function PATCH(
         status: newStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', context.params.orderId)
+      .eq('id', params.orderId)
 
     if (updateError) {
       return NextResponse.json(
@@ -66,7 +70,7 @@ export async function PATCH(
         )
       `,
       )
-      .eq('id', context.params.orderId)
+      .eq('id', params.orderId)
       .single()
 
     if (fetchError) {
