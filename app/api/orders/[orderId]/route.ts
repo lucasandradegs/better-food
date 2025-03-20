@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { orderId: string } },
+  { params }: { params: Promise<{ orderId: string }> },
 ) {
   try {
     const { newStatus } = await req.json()
     const supabase = createRouteHandlerClient({ cookies })
+    const { orderId } = await params
 
     // Verificar autenticação
     const {
@@ -40,7 +41,7 @@ export async function PATCH(
         status: newStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.orderId)
+      .eq('id', orderId)
 
     if (updateError) {
       return NextResponse.json(
@@ -66,7 +67,7 @@ export async function PATCH(
         )
       `,
       )
-      .eq('id', params.orderId)
+      .eq('id', orderId)
       .single()
 
     if (fetchError) {
