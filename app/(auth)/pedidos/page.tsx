@@ -22,10 +22,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { OrderCard } from '@/components/OrderCard'
-import { LayoutGrid, Table as TableIcon } from 'lucide-react'
+import {
+  LayoutGrid,
+  Table as TableIcon,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useOrdersSubscription } from '@/hooks/useOrdersSubscription'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 type OrderItem = {
   id: string
@@ -71,6 +84,7 @@ type Order = {
     email: string
   }
   discount_amount: number
+  total: number
 }
 
 type OrdersResponse = {
@@ -145,8 +159,6 @@ const ALLOWED_STATUS_OPTIONS: Database['public']['Enums']['order_status'][] = [
   'preparing',
   'ready',
   'delivered',
-  'cancelled',
-  'refunded',
 ]
 
 function StatusDot({ color }: { color: string }) {
@@ -196,20 +208,19 @@ const updateOrderStatus = async ({
   return response.json()
 }
 
+interface PaymentResponseData {
+  charges: Array<{ id: string }>
+}
+
 export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [paymentFilter, setPaymentFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [cancelOrderData, setCancelOrderData] = useState<Order | null>(null)
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false)
   const queryClient = useQueryClient()
-
-  // Carregar preferência de visualização
-  useEffect(() => {
-    const savedViewMode = localStorage.getItem('ordersViewMode')
-    if (savedViewMode === 'table' || savedViewMode === 'cards') {
-      setViewMode(savedViewMode)
-    }
-  }, [])
 
   // Buscar pedidos
   const { data, isLoading } = useQuery({
@@ -219,6 +230,22 @@ export default function Orders() {
 
   const orders = data?.orders || []
   const isAdmin = data?.isAdmin || false
+
+  const ITEMS_PER_PAGE = useMemo(() => {
+    return viewMode === 'table' ? 10 : 9
+  }, [viewMode])
+
+  // Carregar preferência de visualização
+  useEffect(() => {
+    if (isAdmin) {
+      const savedViewMode = localStorage.getItem('ordersViewMode')
+      if (savedViewMode === 'table' || savedViewMode === 'cards') {
+        setViewMode(savedViewMode)
+      }
+    } else {
+      setViewMode('cards')
+    }
+  }, [isAdmin])
 
   // Configurar inscrição real-time
   useOrdersSubscription(isAdmin)
@@ -267,6 +294,7 @@ export default function Orders() {
   // Salvar preferência de visualização
   const handleViewModeChange = (newMode: 'table' | 'cards') => {
     setViewMode(newMode)
+    setCurrentPage(1)
     localStorage.setItem('ordersViewMode', newMode)
   }
 
@@ -303,6 +331,115 @@ export default function Orders() {
     return filtered
   }, [orders, statusFilter, paymentFilter, dateFilter])
 
+  // Calcular total de páginas
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE)
+
+  // Obter pedidos da página atual
+  const currentOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [filteredOrders, currentPage, ITEMS_PER_PAGE])
+
+  // Resetar página quando os filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter, paymentFilter, dateFilter])
+
+  // Componente de paginação
+  const Pagination = () => {
+    if (totalPages <= 1) return null
+
+    return (
+      <div className="mt-4 flex items-center justify-between border-t pt-4 dark:border-[#343434]">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Página {currentPage} de {totalPages}
+          </span>
+          <span>•</span>
+          <span>
+            {filteredOrders.length}{' '}
+            {filteredOrders.length === 1 ? 'pedido' : 'pedidos'}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="dark:border-[#343434] dark:bg-[#232323]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+            }
+            disabled={currentPage === totalPages}
+            className="dark:border-[#343434] dark:bg-[#232323]"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  async function handlePaymentCancellation(orderId: string, payment: Payment) {
+    try {
+      setIsProcessingRefund(true)
+      // Primeiro convertemos para unknown e depois para o tipo específico
+      const responseData = (
+        typeof payment.response_data === 'string'
+          ? JSON.parse(payment.response_data)
+          : payment.response_data
+      ) as PaymentResponseData | null
+      const chargeId = responseData?.charges?.[0]?.id
+
+      if (!chargeId) {
+        throw new Error('Não foi possível encontrar o ID da transação')
+      }
+
+      const response = await fetch('/api/cancel-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chargeId,
+          amount: payment.amount,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erro ao cancelar pagamento')
+      }
+
+      // Se o cancelamento do pagamento for bem-sucedido, atualiza o status do pedido
+      await updateStatus({ orderId, newStatus: 'cancelled' })
+      toast.success('Pagamento cancelado com sucesso')
+      setCancelOrderData(null) // Fecha o modal após o cancelamento
+    } catch (error) {
+      console.error('Erro ao cancelar pagamento:', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao cancelar pagamento',
+      )
+    } finally {
+      setIsProcessingRefund(false)
+    }
+  }
+
+  // Função para abrir o modal de cancelamento
+  const handleOpenCancelModal = (order: Order) => {
+    const payment = order.payments[0]
+    if (payment && payment.status === 'PAID') {
+      setCancelOrderData(order)
+    }
+  }
+
   async function handleStatusUpdate(
     orderId: string,
     newStatus: Database['public']['Enums']['order_status'],
@@ -312,7 +449,95 @@ export default function Orders() {
       return
     }
 
+    // Se o novo status for 'cancelled', primeiro tenta cancelar o pagamento
+    if (newStatus === 'cancelled') {
+      const order = orders.find((o) => o.id === orderId)
+      const payment = order?.payments[0]
+
+      if (payment && payment.status === 'PAID') {
+        await handlePaymentCancellation(orderId, payment)
+        return
+      }
+    }
+
     updateStatus({ orderId, newStatus })
+  }
+
+  // Modal component
+  const CancelOrderModal = () => {
+    if (!cancelOrderData) return null
+
+    const order = cancelOrderData
+
+    return (
+      <Dialog
+        open={!!cancelOrderData}
+        onOpenChange={() => !isProcessingRefund && setCancelOrderData(null)}
+      >
+        <DialogContent className="dark:border-[#343434] dark:bg-[#1c1c1c] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar cancelamento do pedido</DialogTitle>
+            <DialogDescription>
+              Você está prestes a cancelar o seguinte pedido:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Detalhes do Pedido:</p>
+              <p className="text-sm text-muted-foreground">
+                ID: {order.id.slice(0, 8)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Cliente: {order.customer.email}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Valor: {formatCurrency(order.total_amount)}
+              </p>
+              <div className="text-sm text-muted-foreground">
+                Itens:
+                {order.items.map((item) => (
+                  <div key={item.id} className="ml-2">
+                    • {item.quantity}x {item.product.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-md bg-destructive/10 p-3">
+              <p className="text-sm font-semibold text-destructive">Atenção:</p>
+              <p className="text-sm text-destructive">
+                Esta ação não pode ser desfeita e o valor será estornado para o
+                cliente.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelOrderData(null)}
+              disabled={isProcessingRefund}
+            >
+              Fechar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handlePaymentCancellation(order.id, order.payments[0])
+              }
+              disabled={isProcessingRefund}
+            >
+              {isProcessingRefund ? (
+                <>
+                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                  Processando...
+                </>
+              ) : (
+                'Realizar reembolso'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
   }
 
   if (isLoading) {
@@ -410,7 +635,7 @@ export default function Orders() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredOrders.map((order) => (
+                {currentOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="text-xs font-medium">
                       {order.id.slice(0, 8)}
@@ -465,23 +690,26 @@ export default function Orders() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <select
-                        className="rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
-                        value={order.status}
-                        onChange={(e) =>
-                          handleStatusUpdate(
-                            order.id,
-                            e.target
-                              .value as Database['public']['Enums']['order_status'],
-                          )
-                        }
-                      >
-                        {ALLOWED_STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {orderStatusMap[status].label}
-                          </option>
-                        ))}
-                      </select>
+                      {order.status !== 'cancelled' &&
+                      order.status !== 'refunded' ? (
+                        <select
+                          className="rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
+                          value={order.status}
+                          onChange={(e) =>
+                            handleStatusUpdate(
+                              order.id,
+                              e.target
+                                .value as Database['public']['Enums']['order_status'],
+                            )
+                          }
+                        >
+                          {ALLOWED_STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {orderStatusMap[status].label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       {order.payments[0]?.status === 'PAID' &&
@@ -489,9 +717,7 @@ export default function Orders() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() =>
-                              handleStatusUpdate(order.id, 'cancelled')
-                            }
+                            onClick={() => handleOpenCancelModal(order)}
                             className="text-xs"
                           >
                             Cancelar Pagamento
@@ -502,19 +728,27 @@ export default function Orders() {
                 ))}
               </TableBody>
             </Table>
+            <div className="p-4">
+              <Pagination />
+            </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                isAdmin={true}
-                onStatusUpdate={handleStatusUpdate}
-              />
-            ))}
+          <div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {currentOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  isAdmin={isAdmin}
+                  onStatusUpdate={handleStatusUpdate}
+                  handleOpenCancelModal={handleOpenCancelModal}
+                />
+              ))}
+            </div>
+            <Pagination />
           </div>
         )}
+        <CancelOrderModal />
       </div>
     )
   }
@@ -564,10 +798,19 @@ export default function Orders() {
         </Select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredOrders.map((order) => (
-          <OrderCard key={order.id} order={order} />
-        ))}
+      <div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {currentOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isAdmin={isAdmin}
+              onStatusUpdate={handleStatusUpdate}
+              handleOpenCancelModal={handleOpenCancelModal}
+            />
+          ))}
+        </div>
+        <Pagination />
       </div>
     </div>
   )

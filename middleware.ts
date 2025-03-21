@@ -33,9 +33,21 @@ export const config = {
     '/api/create-payment/:path*',
     '/api/create-pix-payment/:path*',
     '/api/create-order/:path*',
+    '/api/cancel-payment/:path*',
     // Rotas de cupom (mais flexíveis)
     '/api/validate-coupon/:path*',
     '/api/update-coupon-usage/:path*',
+    '/api/orders/:path*',
+    '/api/orders/[orderId]/:path*',
+    '/api/featured-restaurants/:path*',
+    '/api/notifications/:path*',
+    '/api/product-categories/:path*',
+    '/api/profile/admin-stats/:path*',
+    '/api/profile/customer-stats/:path*',
+    '/api/store-categories/:path*',
+    '/api/stores/:path*',
+    '/api/user-store/:path*',
+    '/api/dashboard/stats/:path*',
   ],
 }
 
@@ -46,7 +58,8 @@ export async function middleware(request: NextRequest) {
   const isStrictRoute =
     path.includes('/create-payment') ||
     path.includes('/create-pix-payment') ||
-    path.includes('/create-order')
+    path.includes('/create-order') ||
+    path.includes('/cancel-payment')
 
   const ratelimit = isStrictRoute ? strictRateLimit : standardRateLimit
 

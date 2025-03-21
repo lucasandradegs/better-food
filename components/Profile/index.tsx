@@ -157,7 +157,7 @@ export default function ProfileDetails({
             <Card className="dark:bg-[#262626]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium dark:text-white">
-                  Total de Pedidos
+                  Pedidos confirmados
                 </CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </CardHeader>

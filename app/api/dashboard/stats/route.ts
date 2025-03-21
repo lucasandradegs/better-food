@@ -69,11 +69,17 @@ export async function GET(request: Request) {
       .lt('created_at', todayUTC.toISOString())
 
     // Buscar total de pedidos
-    const { data: storeData } = await supabase
-      .from('stores')
-      .select('order_count')
-      .eq('id', storeId)
-      .single()
+    const { count: totalOrders } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('store_id', storeId)
+
+    // Buscar total de pedidos cancelados
+    const { count: cancelledOrders } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('store_id', storeId)
+      .eq('status', 'cancelled')
 
     // Buscar total de vendas
     const { data: allOrders } = await supabase
@@ -117,7 +123,8 @@ export async function GET(request: Request) {
         yesterdayOrders.length > 0
           ? previousDaySales / yesterdayOrders.length
           : 0,
-      totalOrders: storeData?.order_count || 0,
+      totalOrders: totalOrders || 0,
+      cancelledOrders: cancelledOrders || 0,
       totalSales,
     }
 

@@ -16,6 +16,7 @@ interface DashboardStatsProps {
   previousDayOrders: number
   previousDayTicket: number
   totalOrders: number
+  cancelledOrders: number
   totalSales: number
 }
 
@@ -27,6 +28,7 @@ export function DashboardStats({
   previousDayOrders,
   previousDayTicket,
   totalOrders,
+  cancelledOrders,
   totalSales,
 }: DashboardStatsProps) {
   // Calcula as variações percentuais
@@ -49,7 +51,7 @@ export function DashboardStats({
         ? ((averageTicket - previousDayTicket) / previousDayTicket) * 100
         : 0
 
-  console.log(salesChange)
+  console.log(totalOrders)
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -153,6 +155,14 @@ export function DashboardStats({
           </div>
           <p className="text-xs text-muted-foreground">
             Total de pedidos realizados
+            {cancelledOrders > 0 && (
+              <>
+                ,{' '}
+                <span className="text-red-500 dark:text-red-400">
+                  {cancelledOrders} cancelados
+                </span>
+              </>
+            )}
           </p>
         </CardContent>
       </Card>

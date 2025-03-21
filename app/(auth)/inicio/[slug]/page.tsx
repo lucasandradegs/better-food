@@ -8,6 +8,8 @@ import { Star } from 'lucide-react'
 import { ProductGrid } from '@/components/ProductGrid'
 import { CategoryFilter } from '@/components/CategoryFilter'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StoreRatingsDialog } from '@/components/StoreRatingsDialog'
+import type { Rating } from '@/components/StoreRatingsDialog'
 
 type Store = Database['public']['Tables']['stores']['Row'] & {
   store_categories: {
@@ -41,6 +43,16 @@ export default function StorePage({
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [showRatings, setShowRatings] = useState(false)
+  const [storeRatings, setStoreRatings] = useState<{
+    average_rating: number
+    total_ratings: number
+    ratings: Rating[]
+  }>({
+    average_rating: 0,
+    total_ratings: 0,
+    ratings: [],
+  })
   const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
@@ -86,6 +98,32 @@ export default function StorePage({
           console.error('Erro ao buscar produtos:', productsError)
         } else {
           setProducts(storeProducts || [])
+        }
+
+        // Busca as avaliações da loja
+        const { data: ratingsData, error: ratingsError } = await supabase.rpc(
+          'get_store_ratings',
+          {
+            p_store_id: matchingStore.id,
+          },
+        )
+
+        if (ratingsError) {
+          console.error('Erro ao buscar avaliações:', ratingsError)
+        } else if (ratingsData?.[0]) {
+          const {
+            avg_rating: averageRating,
+            total_ratings: totalRatings,
+            ratings,
+          } = ratingsData[0]
+
+          const storeRatingsData = {
+            average_rating: Number(averageRating) || 0,
+            total_ratings: Number(totalRatings) || 0,
+            ratings: Array.isArray(ratings) ? ratings : [],
+          }
+
+          setStoreRatings(storeRatingsData)
         }
       }
 
@@ -197,9 +235,16 @@ export default function StorePage({
             <h1 className="text-xl font-bold tracking-tight dark:text-white">
               {store.name}
             </h1>
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-400" />
-            </div>
+            <button
+              onClick={() => setShowRatings(true)}
+              className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-[#343434]"
+            >
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium">{storeRatings.average_rating}</span>
+              <span className="text-sm text-gray-500">
+                ({storeRatings.total_ratings})
+              </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -209,6 +254,14 @@ export default function StorePage({
           </div>
         </div>
       </div>
+
+      <StoreRatingsDialog
+        isOpen={showRatings}
+        onClose={() => setShowRatings(false)}
+        ratings={storeRatings.ratings}
+        averageRating={storeRatings.average_rating}
+        totalRatings={storeRatings.total_ratings}
+      />
 
       <div className="mt-8">
         <h2 className="mb-6 text-lg font-bold tracking-tight">Cardápio</h2>

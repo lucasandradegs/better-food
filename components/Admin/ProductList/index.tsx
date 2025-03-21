@@ -252,7 +252,9 @@ export function ProductList({
                       variant={
                         product.is_available ? 'secondary' : 'destructive'
                       }
-                      className="dark:border-[#343434] dark:bg-[#1c1c1c]"
+                      className={`dark:border-[#343434] dark:bg-[#1c1c1c] ${
+                        !product.is_available && 'bg-red-500 dark:bg-red-500'
+                      }`}
                     >
                       {product.is_available ? 'Disponível' : 'Indisponível'}
                     </Badge>

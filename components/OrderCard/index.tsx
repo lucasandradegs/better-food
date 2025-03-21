@@ -70,9 +70,10 @@ type Order = {
     logo_url: string | null
   }
   discount_amount: number
-  customer?: {
+  customer: {
     email: string
   }
+  total: number
 }
 // @ts-expect-error its working
 type OrderRating = Database['public']['Tables']['order_ratings']['Row']
@@ -148,8 +149,9 @@ interface OrderCardProps {
   onStatusUpdate?: (
     orderId: string,
     newStatus: Database['public']['Enums']['order_status'],
-  ) => Promise<void>
+  ) => void
   updating?: boolean
+  handleOpenCancelModal?: (order: Order) => void
 }
 
 function StatusDot({ color }: { color: string }) {
@@ -173,6 +175,7 @@ export function OrderCard({
   isAdmin,
   onStatusUpdate,
   updating,
+  handleOpenCancelModal,
 }: OrderCardProps) {
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false)
   const [hasRating, setHasRating] = useState(false)
@@ -200,6 +203,8 @@ export function OrderCard({
 
   const paymentStatus = order.payments[0]?.status || 'PENDING'
   const paymentMethod = order.payments[0]?.payment_method
+  const isCancelled =
+    order.status === 'cancelled' || order.status === 'refunded'
 
   const handleRatingSubmitted = () => {
     setHasRating(true)
@@ -341,31 +346,45 @@ export function OrderCard({
           {isAdmin ? (
             <div className="flex flex-col gap-1">
               <p className="truncate text-xs font-medium">
-                {order.customer?.email}
+                {order.customer.email}
               </p>
               <p className="text-xs text-muted-foreground">
                 ID: {order.user_id.slice(0, 8)}
               </p>
-              <div className="mt-2">
-                <select
-                  className="w-full rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
-                  value={order.status}
-                  onChange={(e) =>
-                    onStatusUpdate?.(
-                      order.id,
-                      e.target
-                        .value as Database['public']['Enums']['order_status'],
-                    )
-                  }
-                  disabled={updating}
-                >
-                  {ALLOWED_STATUS_OPTIONS.map((status) => (
-                    <option key={status} value={status}>
-                      {orderStatusMap[status].label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!isCancelled && (
+                <div className="mt-2">
+                  <select
+                    className="w-full rounded border p-1 text-sm disabled:opacity-50 dark:border-[#343434] dark:bg-[#1c1c1c]"
+                    value={order.status}
+                    onChange={(e) =>
+                      onStatusUpdate?.(
+                        order.id,
+                        e.target
+                          .value as Database['public']['Enums']['order_status'],
+                      )
+                    }
+                    disabled={updating}
+                  >
+                    {ALLOWED_STATUS_OPTIONS.map((status) => (
+                      <option key={status} value={status}>
+                        {orderStatusMap[status].label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {paymentStatus === 'PAID' && !isCancelled && (
+                <div className="mt-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleOpenCancelModal?.(order)}
+                    className="w-full text-xs"
+                  >
+                    Cancelar Pagamento
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="truncate text-xs font-medium">{order.store.name}</p>
