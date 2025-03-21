@@ -71,26 +71,24 @@ export async function POST(request: Request) {
 
     // 1. Criar pedido no PagBank
     console.log('Iniciando chamada ao PagBank...')
-    const response = await fetch(
-      `https://${process.env.PAGBANK_API_URL}/orders`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          reference_id: `order-${Date.now()}`,
-          customer: data.customer,
-          items: data.items,
-          notification_urls: [
-            `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/pagbank`,
-          ],
-          charges: data.charges,
-        }),
+
+    const response = await fetch(`${process.env.PAGBANK_API_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-    )
+      body: JSON.stringify({
+        reference_id: `order-${Date.now()}`,
+        customer: data.customer,
+        items: data.items,
+        notification_urls: [
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/pagbank`,
+        ],
+        charges: data.charges,
+      }),
+    })
 
     const responseData = await response.json()
     console.log('Resposta do PagBank:', responseData)

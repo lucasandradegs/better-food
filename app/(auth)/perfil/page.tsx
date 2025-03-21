@@ -8,8 +8,6 @@ export default function Profile() {
 
   if (!user) return null
 
-  console.log(user)
-
   return (
     <ProfileDetails
       name={user.user_metadata.name}

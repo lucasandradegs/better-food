@@ -84,10 +84,6 @@ export default function CheckoutPayButton() {
   const creditCardPayment = paymentMethod === 'CREDIT_CARD'
   const pixPayment = paymentMethod === 'PIX'
 
-  useEffect(() => {
-    console.log('Dialog State:', { paymentStatus, pixPayment, pixData })
-  }, [paymentStatus, pixPayment, pixData])
-
   const handlePayment = async () => {
     try {
       setIsDialogOpen(true)
@@ -96,27 +92,16 @@ export default function CheckoutPayButton() {
 
       if (submitForm) {
         const result = await submitForm()
-        console.log('Submit Result:', result)
 
         if (pixPayment && result?.qr_codes?.[0]) {
-          console.log('Entrou no if do PIX')
           const qrCode = result.qr_codes[0]
           const qrCodeUrl = qrCode.links.find(
             (link: QRCodeLink) => link.media === 'image/png',
           )?.href
 
-          console.log('QR Code encontrado:', qrCode)
-          console.log('URL do QR Code:', qrCodeUrl)
-
           if (!qrCodeUrl) {
             throw new Error('URL do QR Code não encontrada')
           }
-
-          console.log('QR Code Data:', {
-            qrCodeUrl,
-            qrCodeText: qrCode.text,
-            amount: qrCode.amount.value,
-          })
 
           setPixData({
             qrCodeUrl,
@@ -125,12 +110,6 @@ export default function CheckoutPayButton() {
           })
 
           setPaymentStatus('success')
-        } else {
-          console.log('Não entrou no if do PIX:', {
-            pixPayment,
-            hasQrCodes: !!result?.qr_codes,
-            qrCodesLength: result?.qr_codes?.length,
-          })
         }
       }
     } catch (error) {
@@ -141,8 +120,6 @@ export default function CheckoutPayButton() {
       }
     }
   }
-
-  console.log('Button state:', { isFormValid, hasSubmitForm: !!submitForm })
 
   const getAnimationData = () => {
     switch (paymentStatus) {

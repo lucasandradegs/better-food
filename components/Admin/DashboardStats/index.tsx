@@ -51,8 +51,6 @@ export function DashboardStats({
         ? ((averageTicket - previousDayTicket) / previousDayTicket) * 100
         : 0
 
-  console.log(totalOrders)
-
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <Card className="bg-white dark:border-[#343434] dark:bg-[#262626]">

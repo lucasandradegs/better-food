@@ -11,7 +11,6 @@ export function CategoryFilter({
   selectedCategory,
   onCategoryChange,
 }: CategoryFilterProps) {
-  console.log(categories)
   return (
     <div className="-mx-4 mb-8 px-4 sm:mx-0 sm:px-0">
       <div className="scrollbar-hide flex overflow-x-auto sm:flex-wrap">
