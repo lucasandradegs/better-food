@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'sandbox.api.pagseguro.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.pagbank.com',
+      },
     ],
   },
 }

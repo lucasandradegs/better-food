@@ -44,16 +44,16 @@ export async function POST(request: Request) {
     }
 
     // Fazer a requisição para a API do PagSeguro
-    console.log('Chave API configurada:', !!process.env.PAGSEGURO_API_KEY)
+    console.log('Chave API configurada:', !!process.env.PAGBANK_TOKEN)
     console.log('ChargeId:', chargeId)
     console.log('Amount:', amount)
 
     const response = await fetch(
-      `https://sandbox.api.pagseguro.com/charges/${chargeId}/cancel`,
+      `https://${process.env.PAGBANK_API_URL}/charges/${chargeId}/cancel`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.PAGSEGURO_API_KEY}`,
+          Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

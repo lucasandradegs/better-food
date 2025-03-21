@@ -72,32 +72,35 @@ export async function POST(request: Request) {
 
     // 2. Criar pedido no PagBank
     console.log('Iniciando chamada ao PagBank...')
-    const response = await fetch('https://sandbox.api.pagseguro.com/orders', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        reference_id: `order-${orderId}`,
-        customer: data.customer,
-        items: data.items,
-        notification_urls: [
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/pagbank`,
-        ],
-        qr_codes: [
-          {
-            amount: {
-              value: Math.round(data.orderDetails.amount * 100), // Convertendo para centavos
+    const response = await fetch(
+      `https://${process.env.PAGBANK_API_URL}/orders`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          reference_id: `order-${orderId}`,
+          customer: data.customer,
+          items: data.items,
+          notification_urls: [
+            `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/pagbank`,
+          ],
+          qr_codes: [
+            {
+              amount: {
+                value: Math.round(data.orderDetails.amount * 100), // Convertendo para centavos
+              },
+              expiration_date: new Date(
+                Date.now() + 24 * 60 * 60 * 1000,
+              ).toISOString(), // 24 horas
             },
-            expiration_date: new Date(
-              Date.now() + 24 * 60 * 60 * 1000,
-            ).toISOString(), // 24 horas
-          },
-        ],
-      }),
-    })
+          ],
+        }),
+      },
+    )
 
     const responseData = await response.json()
     console.log('Resposta do PagBank:', responseData)
