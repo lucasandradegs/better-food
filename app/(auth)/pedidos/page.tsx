@@ -209,7 +209,7 @@ const updateOrderStatus = async ({
 }
 
 interface PaymentResponseData {
-  charges: Array<{ id: string }>
+  charges: Array<{ id: string; amount?: { value: number } }>
 }
 
 export default function Orders() {
@@ -397,9 +397,14 @@ export default function Orders() {
           : payment.response_data
       ) as PaymentResponseData | null
       const chargeId = responseData?.charges?.[0]?.id
+      const amount = responseData?.charges?.[0]?.amount?.value
 
       if (!chargeId) {
         throw new Error('Não foi possível encontrar o ID da transação')
+      }
+
+      if (!amount) {
+        throw new Error('Não foi possível encontrar o valor da transação')
       }
 
       const response = await fetch('/api/cancel-payment', {
@@ -409,7 +414,7 @@ export default function Orders() {
         },
         body: JSON.stringify({
           chargeId,
-          amount: payment.amount,
+          amount,
         }),
       })
 

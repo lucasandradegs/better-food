@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Copy, Check, ShoppingBag } from 'lucide-react'
 import { Button } from '../ui/button'
 import { toast } from 'sonner'
@@ -20,10 +21,8 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
       setTimeout(() => setCopied(false), 3000) // Remove a mensagem após 3 segundos
     } catch (error) {
       console.error('Erro ao copiar código:', error)
-      toast({
-        title: 'Erro ao copiar código',
+      toast.error('Erro ao copiar código', {
         description: 'Tente copiar manualmente.',
-        variant: 'destructive',
       })
     }
   }
@@ -38,10 +37,12 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
         pagamento
       </p>
       <div className="relative h-52 w-52 sm:h-64 sm:w-64">
-        <img
+        <Image
           src={qrCodeUrl}
           alt="QR Code PIX"
-          className="h-48 w-48 rounded-lg"
+          fill
+          className="rounded-lg"
+          priority
         />
       </div>
       <p className="text-center text-xs font-medium sm:text-sm">
