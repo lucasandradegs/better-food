@@ -1,7 +1,6 @@
-import Image from 'next/image'
-import { Button } from '../ui/button'
 import { Copy, Check, ShoppingBag } from 'lucide-react'
-import { useToast } from '../ui/use-toast'
+import { Button } from '../ui/button'
+import { toast } from 'sonner'
 import { useState } from 'react'
 import Link from 'next/link'
 
@@ -12,7 +11,6 @@ interface PixQRCodeProps {
 }
 
 export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
-  const { toast } = useToast()
   const [copied, setCopied] = useState(false)
 
   const handleCopyQRCode = async () => {
@@ -40,12 +38,10 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
         pagamento
       </p>
       <div className="relative h-52 w-52 sm:h-64 sm:w-64">
-        <Image
+        <img
           src={qrCodeUrl}
           alt="QR Code PIX"
-          fill
-          className="rounded-lg"
-          priority
+          className="h-48 w-48 rounded-lg"
         />
       </div>
       <p className="text-center text-xs font-medium sm:text-sm">
