@@ -16,9 +16,12 @@ export async function POST(request: Request) {
     console.log('PagBank Webhook Payload:', payload)
 
     const pagbankId = payload.id // ID da ordem do PagBank
-    const isPaid = payload.charges?.[0]?.status === 'PAID'
+    const chargeStatus = payload.charges?.[0]?.status
+    const isPaid = chargeStatus === 'PAID'
+    const isCanceled = chargeStatus === 'CANCELED'
 
-    if (!isPaid) {
+    // Se não for nem pago nem cancelado, não precisa processar
+    if (!isPaid && !isCanceled) {
       return new Response('Nenhuma atualização necessária', { status: 200 })
     }
 
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
       return new Response('Pagamento não encontrado', { status: 404 })
     }
 
-    // Buscar o pedido com informações da loja e lock para update
+    // Buscar o pedido com informações necessárias
     const { data: order, error: orderFetchError } = await supabase
       .from('orders')
       .select(
@@ -46,6 +49,45 @@ export async function POST(request: Request) {
     if (orderFetchError) {
       console.error('Erro ao buscar pedido:', orderFetchError)
       return new Response('Erro ao buscar pedido', { status: 500 })
+    }
+
+    // Se for um cancelamento
+    if (isCanceled) {
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({
+          status: 'CANCELED' as PaymentStatus,
+          updated_at: new Date().toISOString(),
+          response_data: payload,
+        })
+        .eq('id', payment.id)
+
+      if (updateError) {
+        console.error('Erro ao atualizar status do pagamento:', updateError)
+        return new Response('Erro ao atualizar pagamento', { status: 500 })
+      }
+
+      // Criar notificação de cancelamento
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: order.user_id,
+          title: 'Pagamento cancelado e reembolsado 💰',
+          description: 'O valor do seu pedido foi reembolsado com sucesso.',
+          status: 'unread',
+          viewed: false,
+          path: '/pedidos',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (notificationError) {
+        console.error('Erro ao criar notificação:', notificationError)
+      }
+
+      return new Response('Cancelamento processado com sucesso', {
+        status: 200,
+      })
     }
 
     // Se o pedido já foi contabilizado, apenas atualizamos o status se necessário
@@ -120,7 +162,9 @@ export async function POST(request: Request) {
         .insert({
           user_id: store.admin_id,
           title: 'Novo pedido recebido! 🛍️',
-          description: `Novo pedido no valor de R$ ${Number(order.total_amount).toFixed(2)} foi pago via PIX.`,
+          description: `Novo pedido no valor de R$ ${Number(
+            order.total_amount,
+          ).toFixed(2)} foi pago via PIX.`,
           status: 'unread',
           viewed: false,
           path: '/pedidos',
