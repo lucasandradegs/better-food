@@ -52,8 +52,6 @@ export class PagBankService {
         throw new Error('SDK do PagBank não está disponível')
       }
 
-      console.log('Iniciando criptografia do cartão...')
-
       const result = window.PagSeguro.encryptCard({
         publicKey: process.env.NEXT_PUBLIC_PAGBANK_PUBLIC_KEY || '',
         holder: cardData.holder,
@@ -70,7 +68,6 @@ export class PagBankService {
         )
       }
 
-      console.log('Cartão criptografado com sucesso')
       return result.encryptedCard
     } catch (error) {
       console.error('Erro ao criptografar cartão:', error)

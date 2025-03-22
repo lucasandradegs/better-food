@@ -668,20 +668,18 @@ export default function Orders() {
                       <Badge
                         className={cn(
                           order.payments[0]?.status === 'PAID'
-                            ? 'bg-teal-100 dark:bg-teal-950'
-                            : 'bg-yellow-100 dark:bg-yellow-950',
-                          order.payments[0]?.status === 'PAID'
-                            ? 'text-teal-800 dark:text-teal-400'
-                            : 'text-yellow-800 dark:text-yellow-400',
-                          order.payments[0]?.status === 'PAID'
-                            ? 'hover:bg-teal-200 dark:hover:bg-teal-800'
-                            : 'hover:bg-yellow-200 dark:hover:bg-yellow-800',
+                            ? 'bg-green-100 text-green-900 hover:bg-green-200 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-800'
+                            : order.payments[0]?.status === 'CANCELED'
+                              ? 'bg-red-100 text-red-900 hover:bg-red-200 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-800'
+                              : 'bg-yellow-100 text-yellow-900 hover:bg-yellow-200 dark:bg-yellow-950 dark:text-yellow-400 dark:hover:bg-yellow-800',
                           'text-xs',
                         )}
                       >
                         {order.payments[0]?.status === 'PAID'
                           ? 'PAGO'
-                          : 'PENDENTE'}
+                          : order.payments[0]?.status === 'CANCELED'
+                            ? 'CANCELADO'
+                            : 'PENDENTE'}
                       </Badge>
                     </TableCell>
                     <TableCell>

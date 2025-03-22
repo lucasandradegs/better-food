@@ -230,13 +230,20 @@ export function OrderCard({
           </div>
           <Badge
             variant="secondary"
-            className={
+            className={cn(
+              'shrink-0',
               paymentStatus === 'PAID'
-                ? 'shrink-0 bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300'
-                : 'shrink-0 bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-            }
+                ? 'bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-400'
+                : paymentStatus === 'CANCELED'
+                  ? 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-400'
+                  : 'bg-yellow-100 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-400',
+            )}
           >
-            {paymentStatus === 'PAID' ? 'PAGO' : 'PENDENTE'}
+            {paymentStatus === 'PAID'
+              ? 'Pago'
+              : paymentStatus === 'CANCELED'
+                ? 'Cancelado'
+                : 'Pendente'}
           </Badge>
         </div>
         <Badge

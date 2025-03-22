@@ -104,7 +104,6 @@ export function PixForm() {
       })
 
       const responseData = await response.json()
-      console.log('Resposta da API PIX:', responseData)
 
       if (!response.ok) {
         setPaymentStatus('error')
@@ -124,7 +123,6 @@ export function PixForm() {
         },
       } as PixFormData
 
-      console.log('Dados do formulário:', fullData)
       setFormData(fullData)
 
       return responseData
@@ -138,13 +136,6 @@ export function PixForm() {
 
   useEffect(() => {
     const { isDirty, isValid } = form.formState
-
-    console.log('Form validation state:', {
-      isDirty,
-      isValid,
-      errors: form.formState.errors,
-      values: form.getValues(),
-    })
 
     setIsFormValid(isDirty && isValid)
   }, [form.formState, setIsFormValid])

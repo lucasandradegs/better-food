@@ -56,22 +56,10 @@ export function CreditCardForm() {
     if (!order) return
 
     try {
-      console.log('Iniciando processamento do cartão...', {
-        cardNumber: data.cardNumber,
-        expiryDate: data.expiryDate,
-      })
-
       const [expiryMonth, expiryYear] = data.expiryDate.split('/')
-
-      console.log('Dados formatados:', {
-        expiryMonth,
-        expiryYear: `20${expiryYear}`,
-        cvv: '***',
-      })
 
       const pagbankService = PagBankService.getInstance()
 
-      console.log('Gerando token do cartão...')
       const cardToken = await pagbankService.createCardToken({
         number: data.cardNumber,
         expiryMonth,
@@ -79,8 +67,6 @@ export function CreditCardForm() {
         cvv: data.cvv,
         holder: data.name,
       })
-
-      console.log('Token gerado com sucesso:', cardToken.slice(0, 10) + '...')
 
       // Criar pedido no PagBank através do backend
       const orderData = {
@@ -154,9 +140,6 @@ export function CreditCardForm() {
         throw new Error('Erro no processamento do pagamento')
       }
 
-      const pagbankOrder = responseData.order
-      console.log('Pedido criado no PagBank:', pagbankOrder)
-
       const fullData = {
         ...data,
         paymentMethod: 'CREDIT_CARD' as const,
@@ -167,13 +150,6 @@ export function CreditCardForm() {
         },
         cardToken,
       } as CreditCardFormData & { cardToken: string }
-
-      console.log('Dados completos preparados para envio:', {
-        ...fullData,
-        cardNumber: '****',
-        cvv: '***',
-        cardToken: fullData.cardToken.slice(0, 10) + '...',
-      })
 
       setFormData(fullData)
     } catch (error) {
@@ -188,13 +164,6 @@ export function CreditCardForm() {
 
   useEffect(() => {
     const { isDirty, isValid } = form.formState
-
-    console.log('Form validation state:', {
-      isDirty,
-      isValid,
-      errors: form.formState.errors,
-      values: form.getValues(),
-    })
 
     setIsFormValid(isDirty && isValid)
   }, [form.formState, setIsFormValid])
