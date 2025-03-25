@@ -20,6 +20,10 @@ import {
 import { useEffect } from 'react'
 import { PagBankService } from '@/services/pagbank'
 
+const removeSpecialCharacters = (value: string) => {
+  return value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').replace(/\s+/g, ' ')
+}
+
 export function CreditCardForm() {
   const {
     order,
@@ -101,6 +105,7 @@ export function CreditCardForm() {
               type: 'CREDIT_CARD' as const,
               installments: 1,
               capture: true,
+              soft_descriptor: `MUITAFOME`,
               card: {
                 encrypted: cardToken,
                 store: false,
@@ -189,6 +194,12 @@ export function CreditCardForm() {
                   <Input
                     placeholder="Lucas Andrade"
                     {...field}
+                    onChange={(e) => {
+                      const sanitizedValue = removeSpecialCharacters(
+                        e.target.value,
+                      )
+                      field.onChange(sanitizedValue)
+                    }}
                     className="text-base lg:text-sm"
                   />
                 </FormControl>

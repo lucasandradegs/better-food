@@ -32,6 +32,7 @@ interface CreatePaymentRequest {
       type: 'CREDIT_CARD'
       installments: number
       capture: boolean
+      soft_descriptor: string
       card: {
         encrypted: string
         store: boolean

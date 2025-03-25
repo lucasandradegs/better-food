@@ -21,10 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useState } from 'react'
-import { useToast } from '@/hooks/use-toast'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface CreateStoreDialogProps {
   onStoreCreated?: () => void
@@ -53,7 +53,6 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
     logo: null as File | null,
   })
 
-  const { toast } = useToast()
   const router = useRouter()
 
   const { data: storeCategories = [] } = useQuery({
@@ -86,10 +85,8 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
     e.preventDefault()
 
     if (!formData.name || !formData.category_id) {
-      toast({
-        title: 'Erro',
+      toast.error('Campos obrigatórios', {
         description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive',
       })
       return
     }
@@ -115,9 +112,8 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
         throw new Error(data.error || 'Erro ao criar loja')
       }
 
-      toast({
-        title: 'Sucesso!',
-        description: 'Sua loja foi cadastrada com sucesso',
+      toast.success('Loja criada com sucesso!', {
+        description: 'Você será redirecionado para a página da sua loja.',
       })
 
       setIsStoreDialogOpen(false)
@@ -130,12 +126,10 @@ export function CreateStoreDialog({ onStoreCreated }: CreateStoreDialogProps) {
 
       onStoreCreated?.()
       router.refresh()
-    } catch (err) {
-      console.error('Erro completo:', err)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível cadastrar sua loja. Tente novamente.',
-        variant: 'destructive',
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao criar loja', {
+        description: 'Ocorreu um erro ao criar sua loja. Tente novamente.',
       })
     } finally {
       setIsLoading(false)

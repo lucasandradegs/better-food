@@ -19,6 +19,10 @@ import {
 } from '@/contexts/PaymentContext'
 import { useEffect } from 'react'
 
+const removeSpecialCharacters = (value: string) => {
+  return value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').replace(/\s+/g, ' ')
+}
+
 interface QRCodeLink {
   rel: string
   href: string
@@ -172,7 +176,10 @@ export function PixForm() {
                     {...field}
                     className="text-base lg:text-sm"
                     onChange={(e) => {
-                      field.onChange(e)
+                      const sanitizedValue = removeSpecialCharacters(
+                        e.target.value,
+                      )
+                      field.onChange(sanitizedValue)
                       form.trigger('name')
                     }}
                   />

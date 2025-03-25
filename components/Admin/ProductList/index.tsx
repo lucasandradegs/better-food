@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import Image from 'next/image'
 import { Database } from '@/lib/database.types'
 import { useState } from 'react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { ProductForm } from '../ProductForm'
 import {
   AlertDialog,
@@ -112,7 +112,6 @@ export function ProductList({
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const { toast } = useToast()
 
   if (isLoading) {
     return <ProductListSkeleton />
@@ -143,19 +142,12 @@ export function ProductList({
         throw new Error('Erro ao excluir produto')
       }
 
-      toast({
-        title: 'Sucesso!',
-        description: 'Produto excluído com sucesso',
-      })
+      toast.success('Produto excluído com sucesso')
 
       onProductUpdated()
     } catch (error) {
       console.error('Erro ao excluir produto:', error)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível excluir o produto',
-        variant: 'destructive',
-      })
+      toast.error('Não foi possível excluir o produto')
     } finally {
       setProductToDelete(null)
     }

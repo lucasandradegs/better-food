@@ -23,6 +23,7 @@ export function NotificationsPopover() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [open, setOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'read'>(
     'all',
   )
@@ -175,10 +176,17 @@ export function NotificationsPopover() {
     }
   }
 
-  const handlePopoverOpenChange = (open: boolean) => {
-    if (open) {
+  const handlePopoverOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (isOpen) {
       markAllAsViewed()
     }
+  }
+
+  const handleNotificationClick = async (notificationId: string) => {
+    await markAsRead(notificationId)
+    await markAsViewed(notificationId)
+    setOpen(false)
   }
 
   const filteredNotifications = notifications.filter((notification) => {
@@ -188,7 +196,7 @@ export function NotificationsPopover() {
   })
 
   return (
-    <Popover onOpenChange={handlePopoverOpenChange}>
+    <Popover open={open} onOpenChange={handlePopoverOpenChange}>
       <PopoverTrigger asChild>
         <div className="relative cursor-pointer">
           <Bell className="h-5 w-5" />
@@ -293,10 +301,7 @@ export function NotificationsPopover() {
                     notification.status === 'unread' &&
                       'bg-blue-50 dark:bg-[#262626]',
                   )}
-                  onClick={() => {
-                    markAsRead(notification.id)
-                    markAsViewed(notification.id)
-                  }}
+                  onClick={() => handleNotificationClick(notification.id)}
                   tabIndex={-1}
                 >
                   <div className="flex items-center gap-2 lg:gap-4">

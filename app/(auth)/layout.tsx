@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
-import { Toaster } from '@/components/ui/toaster'
 import { RoleGuard } from '@/components/RoleGuard'
 import MobileNav from '@/components/MobileNav'
 
@@ -146,7 +145,6 @@ export default function AuthLayout({
           </div>
         </main>
       </div>
-      <Toaster />
     </>
   )
 }

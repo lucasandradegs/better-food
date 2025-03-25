@@ -7,7 +7,7 @@ import {
   ReactNode,
   useCallback,
 } from 'react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 export interface CartItem {
   id: string
@@ -26,13 +26,15 @@ interface CartContextData {
   clearCart: () => void
   totalItems: number
   totalPrice: number
+  observations: string
+  setObservations: (observations: string) => void
 }
 
 const CartContext = createContext<CartContextData>({} as CartContextData)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
-  const { toast } = useToast()
+  const [observations, setObservations] = useState('')
 
   const totalItems = items.reduce((total, item) => total + item.quantity, 0)
   const totalPrice = items.reduce(
@@ -45,11 +47,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Verifica se já existe um item de uma loja diferente
       const existingStoreId = currentItems[0]?.store_id
       if (existingStoreId && existingStoreId !== newItem.store_id) {
-        toast({
-          title: 'Atenção',
+        toast.error('Atenção', {
           description:
             'Você só pode adicionar itens de uma mesma loja por pedido. Deseja limpar seu carrinho?',
-          variant: 'destructive',
         })
         return currentItems
       }
@@ -70,10 +70,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...currentItems, { ...newItem, quantity: 1 }]
     })
 
-    toast({
-      title: 'Item adicionado',
-      description: 'Item adicionado ao carrinho com sucesso!',
-    })
+    toast.success('Item adicionado ao carrinho!')
   }, [])
 
   const removeItem = useCallback((itemId: string) => {
@@ -90,10 +87,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         item.id === itemId ? { ...item, quantity } : item,
       ),
     )
+
+    toast.success('Item atualizado no carrinho!')
   }, [])
 
   const clearCart = useCallback(() => {
     setItems([])
+    setObservations('')
   }, [])
 
   return (
@@ -106,6 +106,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
+        observations,
+        setObservations,
       }}
     >
       {children}

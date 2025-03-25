@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/database.types'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface OrderRatingDialogProps {
@@ -71,17 +71,14 @@ export function OrderRatingDialog({
   const [comment, setComment] = useState('')
 
   const supabase = createClientComponentClient<Database>()
-  const { toast } = useToast()
   const { userProfile } = useAuth()
 
   const handleSubmit = async () => {
     if (!userProfile?.id) return
 
     if (rating === 0 || foodRating === 0 || deliveryRating === 0) {
-      toast({
-        title: 'Erro',
+      toast.error('Avaliações incompletas', {
         description: 'Por favor, preencha todas as avaliações',
-        variant: 'destructive',
       })
       return
     }
@@ -111,19 +108,24 @@ export function OrderRatingDialog({
         path: `/pedidos`,
       })
 
-      toast({
-        title: 'Sucesso!',
+      toast.success('Avaliação enviada!', {
         description: 'Sua avaliação foi enviada com sucesso',
       })
 
       onRatingSubmitted()
       onClose()
     } catch (error) {
-      console.error('Erro ao enviar avaliação:', error)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível enviar sua avaliação',
-        variant: 'destructive',
+      if (error instanceof Error && error.message === 'PGRST116') {
+        console.error('Erro de permissão:', error)
+        toast.error('Erro de permissão', {
+          description: 'Você não tem permissão para avaliar este pedido.',
+        })
+        return
+      }
+
+      toast.error('Erro ao avaliar pedido', {
+        description:
+          'Ocorreu um erro ao enviar sua avaliação. Tente novamente.',
       })
     } finally {
       setIsLoading(false)

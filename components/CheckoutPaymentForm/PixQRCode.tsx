@@ -28,7 +28,7 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border p-3 sm:gap-4 sm:p-4">
+    <div className="flex flex-col items-center gap-3 rounded-lg p-3 sm:gap-4 sm:p-4">
       <h2 className="text-center text-base font-semibold sm:text-lg">
         Quase lá! 🤩
       </h2>
@@ -51,8 +51,7 @@ export function PixQRCode({ qrCodeUrl, qrCodeText, amount }: PixQRCodeProps) {
       <div className="flex w-full flex-col gap-1.5 sm:gap-2">
         <Button
           onClick={handleCopyQRCode}
-          variant="outline"
-          className="h-9 w-full text-xs sm:h-10 sm:text-sm"
+          className="h-9 w-full bg-muted/30 text-xs text-black hover:bg-muted/50 dark:bg-[#363636] dark:text-white dark:hover:bg-[#363636]/50 sm:h-10 sm:text-sm"
           disabled={copied}
         >
           {copied ? (

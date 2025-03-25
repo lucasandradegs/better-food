@@ -23,7 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import Image from 'next/image'
 import { Database } from '@/lib/database.types'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 type ProductCategory = Database['public']['Tables']['product_categories']['Row']
 
@@ -63,8 +63,6 @@ export function ProductForm({
     description: productToEdit?.description || '',
   })
 
-  const { toast } = useToast()
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -96,10 +94,8 @@ export function ProductForm({
       !formData.description ||
       !storeId
     ) {
-      toast({
-        title: 'Erro',
+      toast.error('Campos obrigatórios', {
         description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive',
       })
       return
     }
@@ -130,13 +126,11 @@ export function ProductForm({
         throw new Error('Erro ao salvar produto')
       }
 
-      toast({
-        title: 'Sucesso!',
-        description: productToEdit
-          ? 'Produto atualizado com sucesso'
-          : 'Produto cadastrado com sucesso',
-      })
-
+      if (productToEdit) {
+        toast.success('Produto atualizado com sucesso!')
+      } else {
+        toast.success('Produto criado com sucesso!')
+      }
       setIsEditDialogOpen(false)
       setFormData({
         name: '',
@@ -149,12 +143,10 @@ export function ProductForm({
       setImagePreview(null)
       onProductCreated()
       if (onClose) onClose()
-    } catch (err) {
-      console.error('Erro completo:', err)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o produto. Tente novamente.',
-        variant: 'destructive',
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao salvar produto', {
+        description: 'Ocorreu um erro ao salvar o produto. Tente novamente.',
       })
     } finally {
       setIsLoading(false)

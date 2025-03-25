@@ -74,6 +74,7 @@ type Order = {
     email: string
   }
   total: number
+  observations?: string | null
 }
 // @ts-expect-error its working
 type OrderRating = Database['public']['Tables']['order_ratings']['Row']
@@ -210,6 +211,8 @@ export function OrderCard({
     setHasRating(true)
   }
 
+  console.log(order)
+
   return (
     <Card className="flex w-full min-w-0 flex-col dark:border-[#343434] dark:bg-[#232323]">
       <CardHeader className="flex flex-col gap-2 pb-4">
@@ -271,6 +274,14 @@ export function OrderCard({
               </p>
             </div>
           ))}
+          {order.observations && (
+            <div className="mt-1 rounded-md bg-muted/30 p-3 dark:bg-[#343434]">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium">Observações:</span>{' '}
+                {order.observations}
+              </p>
+            </div>
+          )}
           <Separator className="my-1" />
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -305,10 +316,8 @@ export function OrderCard({
               <span className="shrink-0 text-sm font-medium tabular-nums">
                 {formatCurrency(
                   order.payments[0]?.payment_method === 'PIX'
-                    ? order.total_amount -
-                        order.discount_amount -
-                        (order.total_amount - order.discount_amount) * 0.05
-                    : order.total_amount - order.discount_amount,
+                    ? order.payments[0]?.amount
+                    : order.total_amount,
                 )}
               </span>
             </div>

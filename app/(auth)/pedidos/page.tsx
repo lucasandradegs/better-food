@@ -85,6 +85,7 @@ type Order = {
   }
   discount_amount: number
   total: number
+  observations?: string | null
 }
 
 type OrdersResponse = {
@@ -661,9 +662,21 @@ export default function Orders() {
                             {index < order.items.length - 1 && ', '}
                           </div>
                         ))}
+                        {order.observations && (
+                          <div className="mt-1 text-xs italic text-muted-foreground">
+                            <span className="font-medium">Obs:</span>{' '}
+                            {order.observations}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell>{formatCurrency(order.total_amount)}</TableCell>
+                    <TableCell>
+                      {formatCurrency(
+                        order.payments[0]?.payment_method === 'PIX'
+                          ? order.payments[0]?.amount
+                          : order.total_amount,
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         className={cn(
@@ -676,10 +689,10 @@ export default function Orders() {
                         )}
                       >
                         {order.payments[0]?.status === 'PAID'
-                          ? 'PAGO'
+                          ? 'Pago'
                           : order.payments[0]?.status === 'CANCELED'
-                            ? 'CANCELADO'
-                            : 'PENDENTE'}
+                            ? 'Cancelado'
+                            : 'Pendente'}
                       </Badge>
                     </TableCell>
                     <TableCell>

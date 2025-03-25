@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies })
     const body = await request.json()
-    const { items, totalAmount, storeId, couponId } = body
+    const { items, totalAmount, storeId, couponId, observations } = body
 
     const {
       data: { user },
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
         admin_id: store.admin_id,
         coupon_id: couponId,
         discount_amount: discountAmount,
+        observations,
       })
       .select('id')
       .single()

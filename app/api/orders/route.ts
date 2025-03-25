@@ -57,7 +57,8 @@ export async function GET() {
           store:stores (
             name,
             logo_url
-          )
+          ),
+          observations
         `,
         )
         .eq('store_id', storeData.id)
@@ -112,7 +113,8 @@ export async function GET() {
           ),
           customer:profiles (
             email
-          )
+          ),
+          observations
         `,
         )
         .eq('user_id', user.id)

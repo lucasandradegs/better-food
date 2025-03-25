@@ -16,7 +16,7 @@ import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import axios, { AxiosError } from 'axios'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import {
   Accordion,
   AccordionContent,
@@ -24,6 +24,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 export function CartSheet() {
   const {
@@ -33,9 +35,10 @@ export function CartSheet() {
     updateItemQuantity,
     removeItem,
     clearCart,
+    observations,
+    setObservations,
   } = useCart()
   const router = useRouter()
-  const { toast } = useToast()
   const [isCreatingOrder, setIsCreatingOrder] = useState(false)
   const [couponCode, setCouponCode] = useState('')
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
@@ -60,17 +63,14 @@ export function CartSheet() {
       })
 
       setAppliedCoupon(response.data)
-      toast({
-        title: 'Cupom aplicado com sucesso! 🎉',
+      toast.success('Cupom aplicado com sucesso! 🎉', {
         description: `Desconto de ${response.data.discount}% aplicado ao seu pedido.`,
       })
     } catch (error) {
       const axiosError = error as AxiosError<{ error: string }>
-      toast({
-        title: 'Erro ao aplicar cupom',
+      toast.error('Erro ao aplicar cupom', {
         description:
           axiosError.response?.data?.error || 'Cupom inválido ou expirado.',
-        variant: 'destructive',
       })
       setAppliedCoupon(null)
     } finally {
@@ -96,6 +96,7 @@ export function CartSheet() {
         totalAmount: totalPrice,
         storeId: items[0]?.store_id,
         couponId: appliedCoupon?.id,
+        observations,
       })
 
       const { orderId } = response.data
@@ -103,12 +104,10 @@ export function CartSheet() {
       router.push(`/checkout?orderId=${orderId}`)
     } catch (error) {
       const axiosError = error as AxiosError<{ error: string }>
-      toast({
-        title: 'Erro ao criar pedido',
+      toast.error('Erro ao criar pedido', {
         description:
           axiosError.response?.data?.error ||
           'Ocorreu um erro ao criar seu pedido. Tente novamente.',
-        variant: 'destructive',
       })
     } finally {
       setIsCreatingOrder(false)
@@ -128,7 +127,7 @@ export function CartSheet() {
         </div>
       </SheetTrigger>
       <SheetContent
-        className="flex w-full flex-col gap-0 p-0 dark:border-[#343434] dark:bg-[#1c1c1c] sm:max-w-lg"
+        className="z-[99999] flex w-full flex-col gap-0 p-0 dark:border-[#343434] dark:bg-[#1c1c1c] sm:max-w-lg"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="flex h-12 justify-center space-y-0.5 px-6">
@@ -231,6 +230,22 @@ export function CartSheet() {
         {items.length > 0 && (
           <div className="border-t p-6 dark:border-[#343434]">
             <dl className="space-y-3">
+              <div className="space-y-3">
+                <Label
+                  htmlFor="observations"
+                  className="text-sm text-muted-foreground"
+                >
+                  Observações
+                </Label>
+                <Textarea
+                  id="observations"
+                  placeholder="Exemplo: Tirar azeitona, sem cebola..."
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  className="min-h-[80px] resize-none text-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+
               <div className="flex items-center justify-between text-muted-foreground">
                 <dt className="text-sm">Subtotal</dt>
                 <dd className="text-sm font-medium">
