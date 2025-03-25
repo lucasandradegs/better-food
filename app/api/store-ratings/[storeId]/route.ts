@@ -4,12 +4,13 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { storeId: string } },
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   const supabase = createRouteHandlerClient({ cookies })
+  const { storeId } = await params
 
   const { data, error } = await supabase.rpc('get_store_ratings', {
-    p_store_id: params.storeId,
+    p_store_id: storeId,
   })
 
   if (error) {
