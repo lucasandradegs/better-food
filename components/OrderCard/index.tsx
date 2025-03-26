@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { Database } from '@/lib/database.types'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { OrderRatingDialog } from '../OrderRatingDialog'
+import { OrderChat } from '../OrderChat'
 
 const ALLOWED_STATUS_OPTIONS: Database['public']['Enums']['order_status'][] = [
   'paid',
@@ -282,6 +283,16 @@ export function OrderCard({
               </p>
             </div>
           )}
+          {paymentStatus === 'PAID' &&
+            !isAdmin &&
+            !isCancelled &&
+            order.status !== 'delivered' && (
+              <OrderChat
+                orderId={order.id}
+                storeId={order.store_id}
+                storeName={order.store.name}
+              />
+            )}
           <Separator className="my-1" />
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">

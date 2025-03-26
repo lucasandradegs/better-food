@@ -2,12 +2,16 @@ import Image from 'next/image'
 import { ThemeToggle } from '../Theme'
 import { NotificationsPopover } from '../Notifications'
 import { CartSheet } from '../Cart'
+import { AdminChatSheet } from '../AdminChatSheet'
 import { usePathname } from 'next/navigation'
 import { RemoveScroll } from 'react-remove-scroll'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function AuthHeader() {
   const pathname = usePathname()
   const isCheckout = pathname.includes('checkout')
+  const { userProfile } = useAuth()
+  const isAdmin = userProfile?.role === 'admin'
 
   return (
     <header
@@ -16,7 +20,8 @@ export function AuthHeader() {
       <div className="mx-auto flex h-12 items-center justify-between scroll-smooth px-4">
         <Image src="/muitafome.png" alt="Logo" width={40} height={40} />
         <div className="flex items-center gap-6">
-          {!isCheckout && <CartSheet />}
+          {!isCheckout && !isAdmin && <CartSheet />}
+          {isAdmin && <AdminChatSheet />}
           <NotificationsPopover />
           <ThemeToggle />
         </div>

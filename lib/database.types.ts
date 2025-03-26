@@ -129,21 +129,27 @@ export interface Database {
         Row: {
           id: string
           email: string
-          role: 'admin' | 'customer'
+          role: 'admin' | 'user'
           created_at: string
           updated_at: string
+          auth_user?: {
+            raw_user_meta_data: {
+              name: string | null
+              picture: string | null
+            }
+          }
         }
         Insert: {
-          id?: string
+          id: string
           email: string
-          role?: 'admin' | 'customer'
+          role?: 'admin' | 'user'
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           email?: string
-          role?: 'admin' | 'customer'
+          role?: 'admin' | 'user'
           created_at?: string
           updated_at?: string
         }
@@ -320,6 +326,103 @@ export interface Database {
           },
         ]
       }
+      chats: {
+        Row: {
+          id: string
+          store_id: string
+          user_id: string
+          order_id: string
+          status: 'active' | 'closed'
+          created_at: string
+          updated_at: string
+          order?: {
+            id: string
+          }
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          user_id: string
+          order_id: string
+          status?: 'active' | 'closed'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          user_id?: string
+          order_id?: string
+          status?: 'active' | 'closed'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'chats_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'chats_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'chats_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'orders'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          id: string
+          chat_id: string
+          sender_id: string
+          content: string
+          created_at: string
+          read_at: string | null
+        }
+        Insert: {
+          id?: string
+          chat_id: string
+          sender_id: string
+          content: string
+          created_at?: string
+          read_at?: string | null
+        }
+        Update: {
+          id?: string
+          chat_id?: string
+          sender_id?: string
+          content?: string
+          created_at?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'chat_messages_chat_id_fkey'
+            columns: ['chat_id']
+            isOneToOne: false
+            referencedRelation: 'chats'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'chat_messages_sender_id_fkey'
+            columns: ['sender_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -351,6 +454,8 @@ export interface Database {
         | 'delivered'
         | 'cancelled'
         | 'refunded'
+      chat_status: 'active' | 'closed'
+      user_role: 'admin' | 'user'
     }
   }
 }

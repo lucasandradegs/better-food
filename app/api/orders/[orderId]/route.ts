@@ -62,6 +62,51 @@ export async function PATCH(
       )
     }
 
+    if (newStatus === 'delivered') {
+      const { data: chatData, error: findChatError } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('order_id', orderId)
+        .single()
+
+      if (findChatError) {
+        console.error('Erro ao buscar chat:', findChatError)
+      }
+
+      if (chatData) {
+        const { error: rpcError } = await supabase.rpc('admin_close_chat', {
+          chat_id_param: chatData.id,
+        })
+
+        if (rpcError) {
+          console.log(
+            'Erro ao atualizar via RPC, tentando atualização direta:',
+            rpcError,
+          )
+
+          const { error: directError } = await supabase
+            .from('chats')
+            .update({
+              status: 'closed',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', chatData.id)
+
+          if (directError) {
+            console.error('Erro na atualização direta:', directError)
+          }
+        }
+
+        const { data: verifyChat } = await supabase
+          .from('chats')
+          .select('status')
+          .eq('id', chatData.id)
+          .single()
+
+        console.log('Status do chat após atualização:', verifyChat?.status)
+      }
+    }
+
     // Buscar o pedido atualizado com todas as informações
     const { data: updatedOrder, error: fetchError } = await supabase
       .from('orders')
