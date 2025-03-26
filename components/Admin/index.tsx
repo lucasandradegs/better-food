@@ -9,6 +9,8 @@ import { ProductForm } from './ProductForm'
 import { ProductList } from './ProductList'
 import { Skeleton } from '../ui/skeleton'
 import { queryClient } from '@/app/providers'
+import Link from 'next/link'
+import { Button } from '../ui/button'
 
 const fetchUserStore = async () => {
   const response = await fetch('/api/user-store')
@@ -171,11 +173,21 @@ export default function AdminDashboard() {
               Gerencie seus produtos e acompanhe suas vendas
             </p>
           </div>
-          <ProductForm
-            productCategories={productCategories}
-            onProductCreated={handleProductCreated}
-            storeId={store?.id}
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Link href="/dashboard/insights" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full dark:bg-[#232323] dark:hover:bg-[#262626] sm:w-auto"
+              >
+                Ver insights (BETA)
+              </Button>
+            </Link>
+            <ProductForm
+              productCategories={productCategories}
+              onProductCreated={handleProductCreated}
+              storeId={store?.id}
+            />
+          </div>
         </div>
 
         <DashboardStats {...dashboardStats} />

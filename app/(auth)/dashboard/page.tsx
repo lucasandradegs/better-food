@@ -36,7 +36,7 @@ export default function DashboardPage() {
               <div className="h-6 w-48 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
               <div className="mt-2 h-4 w-64 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
             </div>
-            <div className="h-10 w-32 animate-pulse rounded-md bg-gray-200 dark:bg-[#343434]" />
+            <div className="h-10 w-full animate-pulse rounded-md bg-gray-200 dark:bg-[#343434] lg:w-[20rem]" />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

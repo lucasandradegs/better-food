@@ -4,13 +4,7 @@ import { Sidebar, SidebarBody, SidebarLink } from '@/components/SideBar'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { Suspense, useEffect, useState } from 'react'
-import {
-  LayoutDashboard,
-  UserCog,
-  LogOut,
-  ChartArea,
-  Package,
-} from 'lucide-react'
+import { UserCog, LogOut, ChartArea, Package, Pizza } from 'lucide-react'
 import { AuthHeader } from '@/components/AuthHeader'
 import { cn } from '@/lib/utils'
 import { RoleGuard } from '@/components/RoleGuard'
@@ -31,7 +25,7 @@ export default function AuthLayout({
       label: 'Início',
       href: '/inicio',
       icon: (
-        <LayoutDashboard className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
+        <Pizza className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
     {

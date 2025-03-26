@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import Image from 'next/image'
 import { Database } from '@/lib/database.types'
 import { useState } from 'react'
@@ -24,67 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
-function ProductListSkeleton() {
-  return (
-    <div className="rounded-lg shadow dark:bg-[#262626]">
-      <div className="p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Skeleton className="h-7 w-24" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
-      </div>
-      <div className="border-t dark:border-[#2e2e2e]">
-        <div className="relative overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase">
-              <tr>
-                <th className="px-6 py-3">Produto</th>
-                <th className="px-6 py-3">Categoria</th>
-                <th className="px-6 py-3">Preço</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[1, 2, 3, 4].map((index) => (
-                <tr
-                  key={index}
-                  className="border-b last:border-b-0 dark:border-[#2e2e2e]"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-32" />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-4 w-24" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-4 w-20" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-6 w-24" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-8 w-8" />
-                      <Skeleton className="h-8 w-8" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 type Product = Database['public']['Tables']['products']['Row'] & {
   product_categories: {
@@ -105,17 +43,12 @@ export function ProductList({
   products,
   productCategories,
   onProductUpdated,
-  isLoading = false,
   storeId,
 }: ProductListProps) {
   const [productToEdit, setProductToEdit] = useState<Product | null>(null)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-
-  if (isLoading) {
-    return <ProductListSkeleton />
-  }
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
