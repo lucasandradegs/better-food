@@ -8,8 +8,9 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const daysAgo = Number(searchParams.get('daysAgo')) || 5 // default to 5 days if not provided
-
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const {
       data: { session },

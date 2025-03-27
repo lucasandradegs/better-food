@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/database.types'
 
@@ -46,10 +46,10 @@ interface CreatePaymentRequest {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = cookies()
-  const supabase = createServerComponentClient<Database>({
-    cookies: () => cookieStore,
-  })
+  const cookieStore = await cookies()
+
+  // @ts-expect-error cookies is not typed
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
   try {
     const data = (await request.json()) as CreatePaymentRequest

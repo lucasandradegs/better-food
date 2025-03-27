@@ -6,7 +6,9 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const cookieStore = await cookies()
+  // @ts-expect-error cookies is not typed
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
   const { storeId } = await params
 
   const { data, error } = await supabase.rpc('get_store_ratings', {

@@ -12,8 +12,9 @@ const openai = new OpenAI({
 export async function POST(request: Request) {
   try {
     const { daysAgo } = await request.json()
-
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const {
       data: { session },

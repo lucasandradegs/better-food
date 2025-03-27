@@ -212,8 +212,6 @@ export function OrderCard({
     setHasRating(true)
   }
 
-  console.log(order)
-
   return (
     <Card className="flex w-full min-w-0 flex-col dark:border-[#343434] dark:bg-[#232323]">
       <CardHeader className="flex flex-col gap-2 pb-4">
@@ -287,11 +285,13 @@ export function OrderCard({
             !isAdmin &&
             !isCancelled &&
             order.status !== 'delivered' && (
-              <OrderChat
-                orderId={order.id}
-                storeId={order.store_id}
-                storeName={order.store.name}
-              />
+              <div className="relative">
+                <OrderChat
+                  orderId={order.id}
+                  storeId={order.store_id}
+                  storeName={order.store.name}
+                />
+              </div>
             )}
           <Separator className="my-1" />
           <div className="flex flex-col gap-2">

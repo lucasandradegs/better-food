@@ -20,7 +20,6 @@ export function ItemListCard({
   items,
   renderItem,
 }: ItemListCardProps) {
-  console.log(items)
   return (
     <Card className="flex h-full flex-col bg-white dark:border-[#343434] dark:bg-[#262626]">
       <CardHeader className="pb-2">

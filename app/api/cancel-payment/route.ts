@@ -21,7 +21,9 @@ export async function POST(request: Request) {
     }
 
     // Verificar se o usuário está autenticado e é admin
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const {
       data: { user },
     } = await supabase.auth.getUser()

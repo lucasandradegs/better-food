@@ -1,11 +1,12 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { Database } from '@/lib/database.types'
 
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const {
       data: { session },
@@ -41,7 +42,9 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { action, notificationId } = await request.json()
 
     const {

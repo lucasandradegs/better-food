@@ -273,18 +273,13 @@ export function AdminChatSheet() {
   }
 
   const fetchChats = async () => {
-    console.log('Iniciando fetchChats, userProfile:', userProfile)
-    // Primeiro, buscar a loja do admin
     const { data: storeData } = await supabase
       .from('stores')
       .select('id')
       .eq('admin_id', userProfile?.id)
       .single()
 
-    console.log('Store data encontrada:', storeData)
-
     if (!storeData?.id) {
-      console.log('Nenhuma loja encontrada para o admin')
       return
     }
 
@@ -293,16 +288,12 @@ export function AdminChatSheet() {
       store_id_param: storeData.id,
     })
 
-    console.log('Chats encontrados:', chatsData)
-    console.log('Erro ao buscar chats:', error)
-
     if (error) {
       console.error('Error fetching chats:', error)
       return
     }
 
     if (!chatsData) {
-      console.log('Nenhum chat encontrado')
       return
     }
 
@@ -320,8 +311,6 @@ export function AdminChatSheet() {
       has_new_messages: chat.has_new_messages,
       is_new_or_updated: chat.is_new_or_updated,
     }))
-
-    console.log('Chats formatados:', formattedChats)
 
     setChats(formattedChats)
     setIsLoading(false)

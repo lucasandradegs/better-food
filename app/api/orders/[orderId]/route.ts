@@ -20,7 +20,9 @@ export async function PATCH(
 ) {
   try {
     const { newStatus } = await req.json()
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = await cookies()
+    // @ts-expect-error cookies is not typed
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { orderId } = await params
 
     // Verificar autenticação
