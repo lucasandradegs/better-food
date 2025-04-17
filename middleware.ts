@@ -12,7 +12,7 @@ const redis = new Redis({
 // Rotas que precisam de rate limit mais restrito
 const strictRateLimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(10, '30 s'),
+  limiter: Ratelimit.slidingWindow(30, '30 s'),
   analytics: true,
   prefix: 'strict_limit',
 })
@@ -20,7 +20,7 @@ const strictRateLimit = new Ratelimit({
 // Rotas que podem ter rate limit mais flexível
 const standardRateLimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(30, '60 s'),
+  limiter: Ratelimit.slidingWindow(100, '60 s'),
   analytics: true,
   prefix: 'standard_limit',
 })
@@ -54,6 +54,9 @@ export const config = {
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
+  // Pega o token de autenticação do header
+  const authToken = request.headers.get('Authorization')?.replace('Bearer ', '')
+
   // Escolhe o rate limiter baseado no tipo de rota
   const isStrictRoute =
     path.includes('/create-payment') ||
@@ -63,10 +66,14 @@ export async function middleware(request: NextRequest) {
 
   const ratelimit = isStrictRoute ? strictRateLimit : standardRateLimit
 
-  // Rate Limiting
+  // Rate Limiting - usando uma combinação de token (se autenticado) ou IP+UserAgent (se não autenticado)
   const forwarded = request.headers.get('x-forwarded-for')
   const ip = forwarded ? forwarded.split(',')[0] : '127.0.0.1'
-  const key = `${ip}:${path}`
+  const userAgent = request.headers.get('user-agent') || 'unknown'
+
+  const key = authToken
+    ? `auth:${authToken}:${path}`
+    : `unauth:${ip}:${userAgent}:${path}`
 
   const { success, reset, remaining } = await ratelimit.limit(key)
 
@@ -123,7 +130,7 @@ export async function middleware(request: NextRequest) {
   )
 
   // Adiciona headers de rate limit na resposta
-  const limit = isStrictRoute ? '10' : '30'
+  const limit = isStrictRoute ? '30' : '100'
   response.headers.set('X-RateLimit-Limit', limit)
   response.headers.set('X-RateLimit-Remaining', remaining.toString())
   response.headers.set('X-RateLimit-Reset', reset.toString())
