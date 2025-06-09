@@ -42,7 +42,7 @@ export function HeroSection() {
         <div className="relative rounded-lg border bg-background shadow-2xl">
           <div className="overflow-hidden rounded-lg">
             <Image
-              src="/heroSection.png"
+              src="/heronew.png"
               alt="MuitaFome Dashboard Preview"
               width={1280}
               height={720}
