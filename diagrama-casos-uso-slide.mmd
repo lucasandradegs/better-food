@@ -1,0 +1,56 @@
+graph TD
+    %% Atores
+    C((Cliente))
+    A((Admin<br/>Loja))
+    S((Sistema))
+
+    %% Casos de Uso Principais
+    subgraph "Gestão de Pedidos"
+        P1[Fazer Pedido]
+        P2[Acompanhar Status]
+        P3[Processar Pedido]
+        P4[Avaliar Entrega]
+    end
+
+    subgraph "Gestão de Produtos"
+        PR1[Buscar Produtos]
+        PR2[Gerenciar Catálogo]
+        PR3[Controlar Preços]
+        PR4[Ver Relatórios]
+    end
+
+    subgraph "Sistema de Comunicação"
+        COM1[Chat Cliente-Loja]
+        COM2[Notificações]
+        COM3[Histórico]
+    end
+
+    subgraph "Pagamentos & Promoções"
+        PAG1[Processar Pagamento]
+        PAG2[Aplicar Cupons]
+        PAG3[Calcular Descontos]
+    end
+
+    %% Relacionamentos principais
+    C --> P1
+    C --> P2
+    C --> P4
+    C --> PR1
+    C --> COM1
+    C --> PAG2
+
+    A --> P3
+    A --> PR2
+    A --> PR3
+    A --> PR4
+    A --> COM1
+
+    S --> PAG1
+    S --> PAG3
+    S --> COM2
+    S --> COM3
+
+    %% Includes importantes
+    P1 -.->|include| PAG1
+    P1 -.->|include| PAG3
+    PAG2 -.->|include| PAG3 

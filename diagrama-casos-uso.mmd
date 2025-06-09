@@ -1,0 +1,81 @@
+graph TB
+    %% Atores
+    Cliente((Cliente))
+    AdminLoja((Administrador<br/>da Loja))
+    Sistema((Sistema))
+
+    %% Casos de Uso - Cliente
+    subgraph "Casos de Uso - Cliente"
+        UC1[Gerenciar Perfil]
+        UC2[Navegar Lojas]
+        UC3[Buscar Produtos]
+        UC4[Adicionar ao Carrinho]
+        UC5[Aplicar Cupom]
+        UC6[Fazer Pedido]
+        UC7[Realizar Pagamento]
+        UC8[Acompanhar Pedido]
+        UC9[Chat com Loja]
+        UC10[Avaliar Pedido]
+        UC11[Visualizar Histórico]
+        UC12[Gerenciar Notificações]
+    end
+
+    %% Casos de Uso - Admin da Loja
+    subgraph "Casos de Uso - Administrador da Loja"
+        UC13[Gerenciar Loja]
+        UC14[Gerenciar Produtos]
+        UC15[Gerenciar Categorias]
+        UC16[Processar Pedidos]
+        UC17[Chat com Clientes]
+        UC18[Visualizar Relatórios]
+        UC19[Controlar Preços]
+        UC20[Gerenciar Disponibilidade]
+    end
+
+    %% Casos de Uso - Sistema
+    subgraph "Casos de Uso - Sistema"
+        UC21[Processar Pagamentos]
+        UC22[Enviar Notificações]
+        UC23[Calcular Descontos]
+        UC24[Registrar Histórico]
+        UC25[Validar Cupons]
+    end
+
+    %% Relacionamentos - Cliente
+    Cliente --> UC1
+    Cliente --> UC2
+    Cliente --> UC3
+    Cliente --> UC4
+    Cliente --> UC5
+    Cliente --> UC6
+    Cliente --> UC7
+    Cliente --> UC8
+    Cliente --> UC9
+    Cliente --> UC10
+    Cliente --> UC11
+    Cliente --> UC12
+
+    %% Relacionamentos - Admin da Loja
+    AdminLoja --> UC13
+    AdminLoja --> UC14
+    AdminLoja --> UC15
+    AdminLoja --> UC16
+    AdminLoja --> UC17
+    AdminLoja --> UC18
+    AdminLoja --> UC19
+    AdminLoja --> UC20
+
+    %% Relacionamentos - Sistema
+    Sistema --> UC21
+    Sistema --> UC22
+    Sistema --> UC23
+    Sistema --> UC24
+    Sistema --> UC25
+
+    %% Relacionamentos include/extend
+    UC6 -.->|include| UC21
+    UC6 -.->|include| UC23
+    UC5 -.->|include| UC25
+    UC8 -.->|include| UC22
+    UC16 -.->|include| UC22
+    UC19 -.->|include| UC24 

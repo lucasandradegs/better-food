@@ -1,0 +1,97 @@
+erDiagram
+    %% Entidades Core do Sistema
+    PROFILES {
+        uuid id PK
+        text email UK
+        enum role
+        integer total_orders
+        numeric total_spent
+    }
+
+    STORES {
+        uuid id PK
+        text name
+        uuid admin_id FK,UK
+        boolean is_visible
+    }
+
+    PRODUCTS {
+        uuid id PK
+        text name
+        numeric price
+        uuid store_id FK
+        boolean is_available
+    }
+
+    ORDERS {
+        uuid id PK
+        uuid user_id FK
+        uuid store_id FK
+        enum status
+        numeric total_amount
+        uuid coupon_id FK
+    }
+
+    ORDER_ITEMS {
+        uuid id PK
+        uuid order_id FK
+        uuid product_id FK
+        integer quantity
+        numeric unit_price
+    }
+
+    PAYMENTS {
+        uuid id PK
+        uuid order_id FK
+        text pagbank_id
+        enum status
+        enum payment_method
+    }
+
+    CHATS {
+        uuid id PK
+        uuid order_id FK
+        uuid user_id FK
+        uuid store_id FK
+        enum status
+    }
+
+    CHAT_MESSAGES {
+        uuid id PK
+        uuid chat_id FK
+        uuid sender_id FK
+        text content
+    }
+
+    ORDER_RATINGS {
+        uuid id PK
+        uuid order_id FK,UK
+        uuid user_id FK
+        integer rating
+        text comment
+    }
+
+    COUPONS {
+        uuid id PK
+        text name UK
+        integer discount
+        boolean is_active
+    }
+
+    %% Relacionamentos Principais
+    PROFILES ||--o{ STORES : "administra"
+    STORES ||--o{ PRODUCTS : "possui"
+    
+    PROFILES ||--o{ ORDERS : "faz"
+    STORES ||--o{ ORDERS : "recebe"
+    COUPONS ||--o{ ORDERS : "desconta"
+    
+    ORDERS ||--o{ ORDER_ITEMS : "contem"
+    PRODUCTS ||--o{ ORDER_ITEMS : "produto"
+    
+    ORDERS ||--o{ PAYMENTS : "paga"
+    ORDERS ||--|| ORDER_RATINGS : "avalia"
+    ORDERS ||--|| CHATS : "conversa"
+    
+    CHATS ||--o{ CHAT_MESSAGES : "mensagens"
+    PROFILES ||--o{ CHAT_MESSAGES : "envia" 

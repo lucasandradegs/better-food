@@ -1,0 +1,191 @@
+erDiagram
+    %% Entidades Principais
+    PROFILES {
+        uuid id PK
+        text email UK
+        enum role
+        timestamp created_at
+        timestamp updated_at
+        integer total_orders
+        numeric total_spent
+        timestamp last_order_at
+        numeric average_order_value
+    }
+
+    STORES {
+        uuid id PK
+        text name
+        uuid category_id FK
+        integer order_count
+        text logo_url
+        uuid admin_id FK,UK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_visible
+    }
+
+    STORE_CATEGORIES {
+        uuid id PK
+        text name UK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PRODUCTS {
+        uuid id PK
+        text name
+        numeric price
+        uuid category_id FK
+        boolean is_available
+        text image_url
+        uuid store_id FK
+        timestamp created_at
+        timestamp updated_at
+        text description
+        integer total_sales
+        numeric total_revenue
+        timestamp last_sale_at
+    }
+
+    PRODUCT_CATEGORIES {
+        uuid id PK
+        text name UK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ORDERS {
+        uuid id PK
+        uuid user_id FK
+        uuid store_id FK
+        enum status
+        numeric total_amount
+        timestamp created_at
+        timestamp updated_at
+        uuid admin_id FK
+        uuid coupon_id FK
+        numeric discount_amount
+        boolean is_counted
+        text observations
+    }
+
+    ORDER_ITEMS {
+        uuid id PK
+        uuid order_id FK
+        uuid product_id FK
+        integer quantity
+        numeric unit_price
+        numeric total_price
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ORDER_RATINGS {
+        uuid id PK
+        uuid user_id FK
+        uuid order_id FK,UK
+        uuid store_id FK
+        integer rating
+        text comment
+        integer delivery_rating
+        integer food_rating
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PAYMENTS {
+        uuid id PK
+        uuid order_id FK
+        text pagbank_id
+        numeric amount
+        jsonb response_data
+        timestamp created_at
+        timestamp updated_at
+        enum status
+        enum payment_method
+    }
+
+    COUPONS {
+        uuid id PK
+        text name UK
+        integer discount
+        integer amount_used
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    CHATS {
+        uuid id PK
+        uuid store_id FK
+        uuid user_id FK
+        uuid order_id FK
+        enum status
+        timestamp created_at
+        timestamp updated_at
+        timestamp last_viewed_at
+        boolean has_new_messages
+        timestamp last_read_at
+    }
+
+    CHAT_MESSAGES {
+        uuid id PK
+        uuid chat_id FK
+        uuid sender_id FK
+        text content
+        timestamp created_at
+        timestamp read_at
+    }
+
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        text title
+        text description
+        enum status
+        timestamp created_at
+        timestamp updated_at
+        boolean viewed
+        text path
+    }
+
+    PRODUCT_PRICE_HISTORY {
+        uuid id PK
+        uuid product_id FK
+        numeric old_price
+        numeric new_price
+        timestamp changed_at
+        timestamp created_at
+    }
+
+    %% Relacionamentos
+    PROFILES ||--o{ STORES : "administra"
+    STORE_CATEGORIES ||--o{ STORES : "categoriza"
+    
+    STORES ||--o{ PRODUCTS : "possui"
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS : "categoriza"
+    
+    PROFILES ||--o{ ORDERS : "faz_pedido"
+    STORES ||--o{ ORDERS : "recebe_pedido"
+    PROFILES ||--o{ ORDERS : "administra_pedido"
+    COUPONS ||--o{ ORDERS : "desconta"
+    
+    ORDERS ||--o{ ORDER_ITEMS : "contem"
+    PRODUCTS ||--o{ ORDER_ITEMS : "item_produto"
+    
+    ORDERS ||--|| ORDER_RATINGS : "avalia"
+    PROFILES ||--o{ ORDER_RATINGS : "avalia"
+    STORES ||--o{ ORDER_RATINGS : "recebe_avaliacao"
+    
+    ORDERS ||--o{ PAYMENTS : "paga"
+    
+    ORDERS ||--|| CHATS : "conversa"
+    STORES ||--o{ CHATS : "participa_chat"
+    PROFILES ||--o{ CHATS : "participa_chat"
+    
+    CHATS ||--o{ CHAT_MESSAGES : "contem_mensagem"
+    PROFILES ||--o{ CHAT_MESSAGES : "envia"
+    
+    PROFILES ||--o{ NOTIFICATIONS : "recebe"
+    
+    PRODUCTS ||--o{ PRODUCT_PRICE_HISTORY : "historico_preco" 
