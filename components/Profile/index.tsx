@@ -1,11 +1,4 @@
-import {
-  MapPin,
-  ShoppingBag,
-  Star,
-  Heart,
-  Mail,
-  DollarSign,
-} from 'lucide-react'
+import { ShoppingBag, Star, Heart, Mail, DollarSign } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -138,10 +131,6 @@ export default function ProfileDetails({
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {name}
                   </h1>
-                  <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-300">
-                    <MapPin className="mr-1 h-4 w-4" />
-                    Timoteo, MG
-                  </p>
                   <p className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-300">
                     <Mail className="mr-1 h-4 w-4" />
                     {email}
@@ -347,10 +336,7 @@ export default function ProfileDetails({
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {name}
                   </h1>
-                  <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-300">
-                    <MapPin className="mr-1 h-4 w-4" />
-                    Timoteo, MG
-                  </p>
+
                   <p className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-300">
                     <Mail className="mr-1 h-4 w-4" />
                     {email}

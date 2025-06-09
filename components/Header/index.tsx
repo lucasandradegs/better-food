@@ -13,7 +13,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-b-gray-200 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between scroll-smooth px-4">
         <nav className="hidden items-center space-x-6 md:flex">
-          <Link
+          {/* <Link
             href="#features"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
@@ -24,21 +24,18 @@ export function Header() {
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             Depoimentos
-          </Link>
+          </Link> */}
         </nav>
 
         <div className="hidden items-center space-x-2 md:flex">
           <Link href="/login">
-            <Button variant="ghost" size="sm">
+            <Button
+              size="sm"
+              className="bg-red-600 text-white transition-all duration-300 hover:bg-red-700"
+            >
               Entrar
             </Button>
           </Link>
-          <Button
-            size="sm"
-            className="bg-red-600 text-white transition-all duration-300 hover:bg-red-700"
-          >
-            Começar agora
-          </Button>
         </div>
 
         <Sheet>

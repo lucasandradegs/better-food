@@ -13,30 +13,44 @@ export default function Login() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace('/inicio')
+      // Verifica se há uma URL de retorno
+      const urlParams = new URLSearchParams(window.location.search)
+      const returnTo = urlParams.get('returnTo')
+
+      if (returnTo && returnTo !== '/login') {
+        router.replace(returnTo)
+      } else {
+        router.replace('/inicio')
+      }
     }
   }, [user, router, isLoading])
+
+  const handleGoogleLogin = () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const returnTo = urlParams.get('returnTo')
+    signInWithGoogle(returnTo || undefined)
+  }
 
   if (isLoading) {
     return null
   }
 
   return (
-    <div className="grid h-screen w-full grid-cols-1 items-center justify-center pl-4 md:grid-cols-2">
-      <div className="mx-auto flex flex-col items-start justify-center px-2 lg:w-[500px]">
+    <div className="grid min-h-screen w-full grid-cols-1 items-center justify-center md:grid-cols-2">
+      <div className="mx-auto flex flex-col items-start justify-center px-4 lg:w-[500px]">
         <div className="flex items-center justify-start">
           <UserRoundPlus className="h-8 w-8 text-red-600" />
         </div>
         <h1 className="mt-2 text-3xl font-bold tracking-tighter sm:text-4xl">
-          Faça login para começar a ter o controle do seu restaurante
+          Faça login para começar a pedir sua comida favorita
         </h1>
         <span className="mt-4 pb-10 text-sm text-muted-foreground">
-          Faça login com sua conta do Google para acessar o seu dashboard
+          Faça login com sua conta do Google para fazer seus pedidos
         </span>
         <Button
           className="border-1 w-full rounded-full border-gray-300 bg-transparent text-base text-black hover:bg-gray-100"
           size={'lg'}
-          onClick={signInWithGoogle}
+          onClick={handleGoogleLogin}
         >
           <Image src="/googleIcon.svg" alt="Google" width={20} height={20} />
           Entrar com Google

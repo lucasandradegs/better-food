@@ -17,6 +17,11 @@ const categories = [
     bgColor: 'bg-pink-100',
   },
   {
+    name: 'Hamburguer',
+    image: '/hamburguer.png',
+    bgColor: 'bg-red-100',
+  },
+  {
     name: 'Carnes',
     image: '/carne.png',
     bgColor: 'bg-pink-100',
@@ -30,11 +35,6 @@ const categories = [
     name: 'Japonesa',
     image: '/sushi.png',
     bgColor: 'bg-blue-100',
-  },
-  {
-    name: 'Vegetariana',
-    image: '/vegetariana.png',
-    bgColor: 'bg-green-100',
   },
   {
     name: 'Bebidas',

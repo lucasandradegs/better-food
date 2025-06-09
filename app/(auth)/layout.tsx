@@ -66,7 +66,10 @@ export default function AuthLayout({
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace('/login')
+      const currentPath = window.location.pathname
+      const queryParams = new URLSearchParams()
+      queryParams.set('returnTo', currentPath)
+      router.replace(`/login?${queryParams.toString()}`)
     }
   }, [user, router, isLoading])
 

@@ -34,6 +34,7 @@ const categoryMapping: Record<string, string> = {
   Italiana: '5f743533-0879-410d-b907-9089cb40d4c3',
   Vegetariana: '5f743533-0879-410d-b907-9089cb40d4c3',
   Bebidas: '1004c5c7-3871-42f7-a761-cff63f643ca0',
+  Hamburguer: '8e4fb6ea-87ce-4c4f-9e27-cb1859761109',
 }
 
 const fetchFeaturedRestaurants = async (): Promise<Store[]> => {

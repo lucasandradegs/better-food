@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
+    const returnTo = requestUrl.searchParams.get('returnTo')
 
     if (code) {
       const cookieStore = cookies()
@@ -13,8 +14,12 @@ export async function GET(request: Request) {
       await supabase.auth.exchangeCodeForSession(code)
     }
 
-    // Redireciona para a página inicial após autenticação
-    return NextResponse.redirect(`${requestUrl.origin}/inicio`)
+    const redirectUrl =
+      returnTo && returnTo !== '/login'
+        ? `${requestUrl.origin}${returnTo}`
+        : `${requestUrl.origin}/inicio`
+
+    return NextResponse.redirect(redirectUrl)
   } catch (error) {
     console.error('Erro no callback:', error)
     return NextResponse.redirect(
